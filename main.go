@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"text/template"
 	"time"
@@ -27,6 +28,11 @@ var Files []string
 func UploadFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20) // Устанавливаем максимальный размер файла 10MB
 
+	storageDir := "Хранилище"
+	if _, err := os.Stat(storageDir); os.IsNotExist(err) {
+		os.Mkdir(storageDir, 0755)
+	}
+
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		http.Error(w, "Ошибка при получении файла", http.StatusInternalServerError)
@@ -37,7 +43,8 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "Файл загружен: %+v\n", handler.Filename)
 	fmt.Fprintf(w, "Размер файла: %+v\n", handler.Size)
-	dst, err := os.Create("/Users/airat/Downloads/Прога/Хранилище/" + handler.Filename)
+
+	dst, err := os.Create(filepath.Join(storageDir, handler.Filename))
 
 	if err != nil {
 		http.Error(w, "Ошибка при создании файла", http.StatusInternalServerError)
@@ -128,8 +135,9 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	Tmpl1.Execute(w, nil)
 }
 func Index(w http.ResponseWriter, r *http.Request) {
-	// Получение списка файлов из вашего хранилища
-	files, err := ioutil.ReadDir("/Users/airat/Downloads/Прога/Хранилище/")
+	// Получение списка файлов из папки "Хранилище" в текущей директории
+	storageDir := "Хранилище"
+	files, err := ioutil.ReadDir(storageDir)
 	if err != nil {
 		http.Error(w, "Ошибка при чтении файлов", http.StatusInternalServerError)
 		log.Println("Ошибка при чтении файлов:", err)
