@@ -28,7 +28,7 @@ var Files []string
 func UploadFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20) // Устанавливаем максимальный размер файла 10MB
 
-	storageDir := "Хранилище"
+	storageDir := "storage"
 	if _, err := os.Stat(storageDir); os.IsNotExist(err) {
 		os.Mkdir(storageDir, 0755)
 	}
@@ -41,10 +41,16 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	// Генерация уникального имени файла
+	fileName := handler.Filename
+	fileExt := filepath.Ext(fileName)
+	uniqueID := time.Now().UnixNano()
+	newFileName := fmt.Sprintf("%d_%s%s", uniqueID, fileName, fileExt)
+
 	fmt.Fprintf(w, "Файл загружен: %+v\n", handler.Filename)
 	fmt.Fprintf(w, "Размер файла: %+v\n", handler.Size)
 
-	dst, err := os.Create(filepath.Join(storageDir, handler.Filename))
+	dst, err := os.Create(filepath.Join(storageDir, newFileName))
 
 	if err != nil {
 		http.Error(w, "Ошибка при создании файла", http.StatusInternalServerError)
@@ -135,8 +141,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	Tmpl1.Execute(w, nil)
 }
 func Index(w http.ResponseWriter, r *http.Request) {
-	// Получение списка файлов из папки "Хранилище" в текущей директории
-	storageDir := "Хранилище"
+	storageDir := "storage"
 	files, err := ioutil.ReadDir(storageDir)
 	if err != nil {
 		http.Error(w, "Ошибка при чтении файлов", http.StatusInternalServerError)
@@ -165,16 +170,29 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	fileName := r.URL.Path[len("/download/"):]
-	file, err := os.Open("/Users/airat/Downloads/Прога/Хранилище/" + fileName)
+	filePath := filepath.Join("storage", fileName)
+	file, err := os.Open(filePath)
 	if err != nil {
 		http.Error(w, "Файл не найден", http.StatusNotFound)
 		return
 	}
 	defer file.Close()
 
-	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	stat, err := file.Stat()
+	if err != nil {
+		http.Error(w, "Ошибка при получении информации о файле", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
 	w.Header().Set("Content-Type", "application/octet-stream")
-	http.ServeContent(w, r, fileName, time.Now(), file)
+	w.Header().Set("Content-Length", strconv.FormatInt(stat.Size(), 10))
+
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "Ошибка при отправке файла", http.StatusInternalServerError)
+		return
+	}
 }
 
 func openDatabase() {
