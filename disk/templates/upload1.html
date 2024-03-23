@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <style>
+        body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    margin: 0;
+    background: url('https://img2.akspic.ru/previews/5/2/4/2/5/152425/152425-macbook-macbook_pro-apple-imac_pro-macos_mojave-x750.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: white; /* Устанавливаем белый цвет текста */
+}
+
+.upload-header {
+    display: flex;
+    align-items: center;
+    padding-top: 85px;
+}
+
+h2 {
+    font-family: Bookman, URW Bookman L, serif;
+    text-align: center;
+    margin-top: 5px;
+}
+
+#logout {
+    font-size: 20px;
+    position: absolute;
+    top: 45px;
+    right: 180px;
+    color: white;
+    text-decoration:  underline;
+    text-decoration-skip-ink: none;
+    cursor: pointer;
+}
+
+#profile {
+    font-size: 20px;
+    position: absolute;
+    top: 45px;
+    left: 180px;
+    color: white;
+    text-shadow: 3px 3px 3px rgb(170, 170, 255);
+}
+
+#profile::after {
+    content: "•";
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    transform: translateY(-50%);
+    color: white;
+    font-size: 20px;
+}
+
+label {
+    margin-right: 10px; /* Отступ между элементами */
+    font-size: 20px;
+}
+
+label[for="file"] {
+    margin-right: 1px; /* Добавляем отступ справа */
+    margin-left: 10px;
+}
+
+input {
+    margin-right: 10px; /* Отступ между элементами */
+}
+
+input[type="file"] {
+    padding: 5px 10px;
+    background-image: linear-gradient(90deg, #647dee,  #7f53ac);
+    color: white; /* Белый цвет текста */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.upload-button {
+    padding: 5px 10px;
+    background-image: linear-gradient(90deg, #FF1700, #DD4A48);
+    color: white; /* Белый цвет текста */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-left: 5px;
+    height: 31px;
+}
+
+.upload-container {
+    display: flex;
+    align-items: center;
+}
+
+.file-container {
+    position: relative;
+    padding-top: 20px;
+    flex: 0.92; /* Растягиваем контейнер до конца страницы */
+    width: 55%;
+    margin: 20px auto;
+    border: 2px solid white; /* Белая обводка */
+    border-radius: 10px;
+    overflow-y: auto; /* Добавляем прокрутку по вертикали */
+    box-shadow: 2px 2px 5px 2px white; /* Добавляем тень */
+}
+
+.search-input:focus {
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    outline: none;
+}
+
+.search-input {
+    border-radius: 10px;
+    height: 25px;
+    outline: none;
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    padding-left: 5px;
+    width: 150px;
+    margin-top: 10px;
+    margin-left: 20px;
+}
+
+.delete-all-button {
+    margin-left: 423px;
+    width: 160px;
+    height: 32px;
+    border-radius: 10px;
+    outline: none;
+    border: 3px solid #a6f2ff;
+}
+
+.delete-all-button:active {
+    transform: scale(0.98); /* Уменьшаем размер кнопки на 5% при нажатии */
+}
+a {
+    color: white; /* Изменение цвета ссылок на белый */
+    text-decoration: none; /* Убирает подчеркивание у ссылок */
+}
+
+a:hover {
+    text-decoration: underline; /* Подчеркивание при наведении на ссылку */
+}
+
+#recipient {
+    border-radius: 10px;
+    height: 20px;
+    outline: none;
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    padding-left: 5px;
+    width: 140px;
+}
+
+
+</style>
+</head>
+<body>
+    <div class="upload-header">
+        <label for="recipient">Recipient:</label>
+        <input type="text" id="recipient" name="recipient"><br><br>
+        <label for="file">Select file to upload:</label>
+        <div class="upload-container">
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <input type="file" id="file" name="file">
+                <input type="submit" value="Upload" class="upload-button">
+            </form>
+        </div>
+    </div>
+    <div class="file-container">
+        <h2>Files available for download: <i class="fa fa-search"></i></h2>
+        <input type="text" placeholder="Search files..." class="search-input">
+        <button class="delete-all-button">Delete All Files</button>
+        <ul>
+            {{range .Files}}
+                <li><a href="/download/{{.}}">{{.}}</a></li>
+            {{end}}
+        </ul>
+    </div>    
+    <div id="logout">Назад</div>
+    <div id="profile">Васек</div>
+    <script>
+        document.getElementById("logout").addEventListener("click", function() {
+            window.location.href = "register.html"; // Замените "registration.html" на путь к вашей странице регистрации
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <style>
+        body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    margin: 0;
+    background: url('https://img1.akspic.ru/previews/2/7/1/6/6/166172/166172-macos_12_monterey_official_stock_wallpaper_6k_resolution_dark-x750.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: white; /* Устанавливаем белый цвет текста */
+}
+
+.upload-header {
+    display: flex;
+    align-items: center;
+}
+
+h1 {
+    font-size: 1.75em;
+    font-weight: bold;
+    margin-top: 60px;
+}
+
+h2 {
+    font-family: Bookman, URW Bookman L, serif;
+    text-align: center;
+    margin-top: 20px;
+}
+
+label {
+    margin-left: 20px; /* Отступ между заголовком и текстом */
+    margin-top: 47px;
+    font-size: 20px;
+}
+
+input {
+    margin-top: 47px;
+}
+
+input[type="file"] {
+    padding: 10px 15px;
+    background-color: #4CAF50; /* Зеленый цвет фона */
+    color: white; /* Белый цвет текста */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+input[type="file"]:active,
+.upload-button:active {
+    transform: scale(0.97); /* Уменьшаем размер кнопки на 5% при нажатии */
+}
+
+input[type="file"]:active {
+    transform: scale(0.98); /* Уменьшаем размер кнопки на 5% при нажатии */
+}
+
+.upload-button {
+    padding: 10px 15px;
+    background-color: #008CBA; /* Голубой цвет фона */
+    color: white; /* Белый цвет текста */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+
+.upload-container {
+    display: flex;
+    align-items: center;
+}
+
+.upload-button {
+    margin-left: 10px; /* Отступ кнопки от поля выбора файла */
+}
+
+.file-container {
+    position: relative;
+    padding-top: 20px;
+    flex: 0.92; /* Растягиваем контейнер до конца страницы */
+    width: 55%;
+    margin: 20px auto;
+    border: 2px solid white; /* Белая обводка */
+    border-radius: 10px;
+    overflow-y: auto; /* Добавляем прокрутку по вертикали */
+    box-shadow: 2px 2px 5px 2px white; /* Добавляем тень */
+}
+
+
+.file-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.file-list li {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.search-input:focus {
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    outline: none;
+}
+
+.search-input {
+    border-radius: 10px;
+    height: 25px;
+    outline: none;
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    padding-left: 5px;
+    width: 150px;
+    margin-top: 10px;
+    margin-left: 20px;
+}
+
+.delete-all-button {
+    margin-left: 423px;
+    width: 160px;
+    height: 32px;
+    border-radius: 10px;
+    outline: none;
+    border: 3px solid #a6f2ff;
+}
+
+.delete-all-button:active {
+    transform: scale(0.98); /* Уменьшаем размер кнопки на 5% при нажатии */
+}
+a {
+    color: white; /* Изменение цвета ссылок на белый */
+    text-decoration: none; /* Убирает подчеркивание у ссылок */
+}
+
+a:hover {
+    text-decoration: underline; /* Подчеркивание при наведении на ссылку */
+}
+    </style>
+</head>
+<body>
+    <div class="upload-header">
+        <h1>File Upload:</h1>
+        <label for="file">Select file to upload:</label>
+        <div class="upload-container">
+            <form action="/upload" method="post" enctype="multipart/form-data">
+
+                
+                <input type="file" id="file" name="file">
+                <input type="submit" value="Upload" class="upload-button">
+
+
+                <label for="recipient">Recipient:</label>
+                <input type="text" id="recipient" name="recipient"><br><br>
+            </form>
+        </div>
+    </div>
+
+    <div class="file-container">
+        <h2>Files available for download: <i class="fa fa-search"></i></h2>
+        <input type="text" placeholder="Search files..." class="search-input">
+        <button class="delete-all-button">Delete All Files</button>
+        <ul>
+            {{range .Files}}
+                <li><a href="/download/{{.}}">{{.}}</a></li>
+            {{end}}
+        </ul>
+        
+    </div>    
+</body>
+</html>
