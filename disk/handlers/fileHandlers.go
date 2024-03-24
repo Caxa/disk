@@ -31,15 +31,12 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	fileName := handler.Filename
-	//fileExt := filepath.Ext(fileName) // Получаем расширение файла
-
+	fileExt := filepath.Ext(fileName)
 	uniqueID := time.Now().UnixNano()
-	newFileName := fmt.Sprintf("%d_%s", uniqueID, fileName)
+	newFileName := fmt.Sprintf("%d_%s%s", uniqueID, fileName, fileExt)
 
-	recipientName := r.FormValue("recipient") // Получаем имя получателя из формы
-
-	// Получение ID пользователя из таблицы users
-	userID := getUserIDFromDB(recipientName, Db)
+	recipientName := r.FormValue("recipient")
+	userID, _ := getUserIDFromDB(recipientName)
 
 	fmt.Fprintf(w, "Файл загружен: %+v\n", handler.Filename)
 	fmt.Fprintf(w, "Размер файла: %+v\n", handler.Size)
@@ -59,19 +56,22 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Сохранение информации о файле в базе данных
 	saveFileToDB(fileName, newFileName, recipientName, userID)
 }
 
-func getUserIDFromDB(username string, Db *sql.DB) string {
+func getUserIDFromDB(username string) (string, error) {
 	var userID string
 	query := "SELECT id FROM users WHERE login = $1"
 	err := Db.QueryRow(query, username).Scan(&userID)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Println("Пользователь с таким именем не найден в базе данных")
+			return "", err
+		}
 		log.Println("Ошибка при получении ID пользователя из базы данных:", err)
-		return ""
+		return "", err
 	}
-	return userID
+	return userID, nil
 }
 
 func saveFileToDB(originalFilename, storedFilename, recipientName string, userID string) {
@@ -81,6 +81,7 @@ func saveFileToDB(originalFilename, storedFilename, recipientName string, userID
 		log.Fatal("Failed to insert file into database:", err)
 	}
 }
+
 func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	fileName := r.URL.Path[len("/download/"):]
 	filePath := filepath.Join("storage", fileName)

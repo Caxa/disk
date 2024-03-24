@@ -89,34 +89,6 @@ func GetFilesByUserIDFromDB(userID int) ([]string, error) {
 	return files, nil
 }
 
-func Index1(w http.ResponseWriter, r *http.Request) {
-	userIDStr := r.URL.Query().Get("id")
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		http.Error(w, "Неверный идентификатор пользователя", http.StatusBadRequest)
-		return
-	}
-
-	files, err := GetFilesByUserIDFromDB(userID)
-	if err != nil {
-		http.Error(w, "Ошибка при получении файлов из базы данных", http.StatusInternalServerError)
-		return
-	}
-
-	data := struct {
-		Files []string
-	}{
-		Files: files,
-	}
-
-	tmpl := template.Must(template.ParseFiles("templates/upload.html"))
-
-	err = tmpl.Execute(w, data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
 func Home(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
