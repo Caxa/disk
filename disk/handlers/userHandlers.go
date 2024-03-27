@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -89,7 +90,7 @@ func GetFilesByUserIDFromDB(userID int) ([]string, error) {
 	return files, nil
 }
 
-func Home(w http.ResponseWriter, r *http.Request) {
+func Home1(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if r.URL.Path != "/" {
@@ -118,6 +119,132 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 	}
 }
+func Home(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
+	switch r.Method {
+	case "GET":
+		Tmpl1.Execute(w, nil)
+	case "POST":
+		login := r.FormValue("login")
+		password := r.FormValue("password")
+		if login == "admin" && password == "admin" {
+			// Если логин и пароль равны "admin", выводим таблицы users и files
+			showTables(w)
+			return
+		} else if login != "" && password != "" {
+			id := AuthenticateUser(ctx, login, password)
+			if id.IDuser != 0 {
+				http.Redirect(w, r, "/main?id="+strconv.Itoa(id.IDuser), http.StatusFound)
+				return
+			} else {
+				RegisterHandler(w, r) // Регистрация нового пользователя
+				return
+			}
+		}
+		http.Error(w, "Неверный логин или пароль", http.StatusUnauthorized)
+	default:
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+	}
+}
+func showTables(w http.ResponseWriter) {
+	Db, err := sql.Open("postgres", "user=postgres password=1234 dbname=airat sslmode=disable")
+	if err != nil {
+		http.Error(w, "Failed to connect to the database", http.StatusInternalServerError)
+		log.Println("Failed to connect to the database:", err)
+		return
+	}
+	defer Db.Close()
+
+	// Запрос к таблице users для получения количества пользователей
+	rowsUsers, err := Db.Query("SELECT COUNT(*) FROM users")
+	if err != nil {
+		http.Error(w, "Failed to query users table", http.StatusInternalServerError)
+		log.Println("Failed to query users table:", err)
+		return
+	}
+	defer rowsUsers.Close()
+
+	var userCount int
+	for rowsUsers.Next() {
+		if err := rowsUsers.Scan(&userCount); err != nil {
+			log.Println("Failed to scan row:", err)
+			continue
+		}
+	}
+
+	// Запрос к таблице files для получения количества файлов
+	rowsFiles, err := Db.Query("SELECT COUNT(*) FROM files")
+	if err != nil {
+		http.Error(w, "Failed to query files table", http.StatusInternalServerError)
+		log.Println("Failed to query files table:", err)
+		return
+	}
+	defer rowsFiles.Close()
+
+	var fileCount int
+	for rowsFiles.Next() {
+		if err := rowsFiles.Scan(&fileCount); err != nil {
+			log.Println("Failed to scan row:", err)
+			continue
+		}
+	}
+
+	// Вывод общей информации о пользователях и файлах
+	fmt.Fprintf(w, "Общее количество пользователей: %d\n", userCount)
+	fmt.Fprintf(w, "Общее количество файлов: %d\n", fileCount)
+
+	// Вывод данных таблицы users
+	rowsUsersData, err := Db.Query("SELECT id, login FROM users")
+	if err != nil {
+		http.Error(w, "Failed to query users table", http.StatusInternalServerError)
+		log.Println("Failed to query users table:", err)
+		return
+	}
+	defer rowsUsersData.Close()
+
+	fmt.Fprintln(w, "\nТаблица пользователей (users):")
+	for rowsUsersData.Next() {
+		var id int
+		var login string
+		if err := rowsUsersData.Scan(&id, &login); err != nil {
+			log.Println("Failed to scan row:", err)
+			continue
+		}
+		fmt.Fprintf(w, "ID: %d, Login: %s\n", id, login)
+	}
+
+	rowsFilesData, err := Db.Query("SELECT id, stored_filename, original_filename, recipient_id, recipient_name, upload_timestamp FROM files")
+	if err != nil {
+		http.Error(w, "Failed to query files table", http.StatusInternalServerError)
+		log.Println("Failed to query files table:", err)
+		return
+	}
+	defer rowsFilesData.Close()
+
+	fmt.Fprintln(w, "\nТаблица файлов (files):")
+	for rowsFilesData.Next() {
+		var id int
+		var storedFilename, originalFilename, recipientName string
+		var recipientID int
+		var uploadTime time.Time
+
+		if err := rowsFilesData.Scan(&id, &storedFilename, &originalFilename, &recipientID, &recipientName, &uploadTime); err != nil {
+			log.Println("Failed to scan row:", err)
+			continue
+		}
+
+		uploadTimeString := uploadTime.Format("2006-01-02 15:04:05") // Форматирование времени в строку
+
+		fmt.Fprintf(w, "ID: %d, Stored Filename: %s, Original Filename: %s, Recipient ID: %d, Recipient Name: %s, Upload Time: %s\n", id, storedFilename, originalFilename, recipientID, recipientName, uploadTimeString)
+	}
+}
+
 func AuthenticateUser(ctx context.Context, login, password string) User {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()

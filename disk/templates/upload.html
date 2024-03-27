@@ -156,10 +156,32 @@ a:hover {
     padding-left: 5px;
     width: 140px;
 }
+button#changeThemeButton {
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    width: 40px;
+    height: 20px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: white;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background-color 0.7s, color 0.7s; /* Добавляем переходы на изменение цвета */
+}
+
+.button-clicked {
+    background-color: black; 
+    color: black;
+}
+
     </style>
 </head>
 <body>
     <div class="upload-header">
+        <button id="changeThemeButton">View</button>
+        
         <label for="file">Select file to upload:</label>
         <div class="upload-container">
             <form action="/upload" method="post" enctype="multipart/form-data">
@@ -183,9 +205,37 @@ a:hover {
     <div id="profile">{{.UserName}}</div>
     <div id="logout">Назад</div>
     <script>
-        document.getElementById("logout").addEventListener("click", function() {
+         document.getElementById("logout").addEventListener("click", function() {
             window.location.href = "/"; 
         });
+        document.getElementById("changeThemeButton").addEventListener("click", function() {
+    var button = document.getElementById("changeThemeButton");
+    var currentBackground = document.body.style.backgroundImage;
+
+    if (currentBackground.includes('152425-macbook-macbook_pro-apple-imac_pro-macos_mojave-x750.jpg')) {
+        document.body.style.backgroundImage = "url('https://4kwallpapers.com/images/wallpapers/macos-mojave-sand-dunes-mojave-desert-california-night-dark-3840x2160-4030.jpg')";
+        button.style.backgroundColor = "black";
+        button.style.color = "white"; // установить цвет текста в белый, когда кнопка черная
+    } else {
+        document.body.style.backgroundImage = "url('https://img2.akspic.ru/previews/5/2/4/2/5/152425/152425-macbook-macbook_pro-apple-imac_pro-macos_mojave-x750.jpg')";
+        button.style.backgroundColor = "white";
+        button.style.color = "black"; // установить цвет текста в черный, когда кнопка белая
+    }
+
+    button.innerText = "View"; // установить текст кнопки
+});
+
+// Получаем элемент кнопки
+var button = document.getElementById("changeThemeButton");
+
+// Устанавливаем начальные стили кнопки
+button.style.backgroundColor = "white";
+button.style.color = "black";
+
+// Устанавливаем текст кнопки
+button.innerText = "View";
+button.style.lineHeight = button.clientHeight + "px";
+
     </script> 
 </body>
 </html>
