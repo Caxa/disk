@@ -10,6 +10,8 @@ import (
 	"text/template"
 	"time"
 
+	//"golang.org/x/crypto/bcrypt"
+
 	_ "github.com/lib/pq"
 )
 
@@ -90,7 +92,7 @@ func GetFilesByUserIDFromDB(userID int) ([]string, error) {
 	return files, nil
 }
 
-func Home1(w http.ResponseWriter, r *http.Request) {
+func Home(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if r.URL.Path != "/" {
@@ -104,22 +106,28 @@ func Home1(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		login := r.FormValue("login")
 		password := r.FormValue("password")
-		if login != "" && password != "" {
+		if login == "admin" && password == "admin" {
+			// Если логин и пароль равны "admin", выводим таблицы users и files
+			showTables(w)
+			return
+		} else if login != "" && password != "" {
 			id := AuthenticateUser(ctx, login, password)
 			if id.IDuser != 0 {
 				http.Redirect(w, r, "/main?id="+strconv.Itoa(id.IDuser), http.StatusFound)
 				return
 			} else {
-				RegisterHandler(w, r) // Регистрация нового пользователя
+				// Обработка неправильного пароля
+				http.ServeFile(w, r, "templates/errorModal.html")
 				return
 			}
 		}
-		http.Error(w, "Неверный логин или пароль", http.StatusUnauthorized)
+		http.ServeFile(w, r, "templates/errorModal.html")
 	default:
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 	}
 }
-func Home(w http.ResponseWriter, r *http.Request) {
+
+func Home1(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if r.URL.Path != "/" {
@@ -152,6 +160,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 	}
 }
+
 func showTables(w http.ResponseWriter) {
 	Db, err := sql.Open("postgres", "user=postgres password=1234 dbname=airat sslmode=disable")
 	if err != nil {
@@ -299,5 +308,39 @@ func OpenDatabase() {
 		} else {
 			log.Println("Successfully connected to the database")
 		}
+	}
+}
+
+func SearchFilesByQuery(searchQuery string) []string {
+	var searchResults []string
+
+	query := "SELECT stored_filename FROM files WHERE original_filename ILIKE $1 OR recipient_name ILIKE $1"
+	rows, err := Db.Query(query, "%"+searchQuery+"%")
+	if err != nil {
+		log.Println("Ошибка при выполнении запроса поиска файлов:", err)
+		return searchResults
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var fileName string
+		if err := rows.Scan(&fileName); err != nil {
+			log.Println("Ошибка при сканировании строки:", err)
+			continue
+		}
+		searchResults = append(searchResults, fileName)
+	}
+
+	return searchResults
+}
+
+func SearchFiles(w http.ResponseWriter, r *http.Request) {
+	searchQuery := r.FormValue("searchQuery")
+
+	searchResults := SearchFilesByQuery(searchQuery)
+
+	fmt.Fprintf(w, "Search Results:\n")
+	for _, file := range searchResults {
+		fmt.Fprintf(w, "%s\n", file)
 	}
 }

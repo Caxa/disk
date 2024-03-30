@@ -4,17 +4,82 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"text/template"
+
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+
 	"time"
 
 	_ "github.com/lib/pq"
 )
 
 func UploadFile(w http.ResponseWriter, r *http.Request) {
+	r.ParseMultipartForm(10 << 20) // Устанавливаем максимальный размер файла 10MB
+
+	storageDir := "storage"
+	if _, err := os.Stat(storageDir); os.IsNotExist(err) {
+		os.Mkdir(storageDir, 0755)
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Ошибка при получении файла", http.StatusInternalServerError)
+		log.Println("Ошибка при получении файла:", err)
+		return
+	}
+	defer file.Close()
+
+	fileName := handler.Filename
+	recipientName := r.FormValue("recipient")
+
+	// Создаем уникальное имя файла на основе времени отправления
+	timeFormat := time.Now().Format("2006-01-02_15-04-05")
+	newFileName := fmt.Sprintf("%s_%s_%s", timeFormat, recipientName, fileName)
+
+	userID, _ := getUserIDFromDB(recipientName)
+
+	dst, err := os.Create(filepath.Join(storageDir, newFileName))
+	if err != nil {
+		http.Error(w, "Ошибка при создании файла", http.StatusInternalServerError)
+		log.Println("Ошибка при создании файла:", err)
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		http.Error(w, "Ошибка при сохранении файла на сервере", http.StatusInternalServerError)
+		log.Println("Ошибка при сохранении файла на сервере:", err)
+		return
+	}
+
+	saveFileToDB(fileName, newFileName, recipientName, userID)
+
+	// Чтение содержимого HTML-шаблона
+	tmpl, err := template.ParseFiles("templates/modal.html")
+	if err != nil {
+		http.Error(w, "Ошибка при чтении файла шаблона", http.StatusInternalServerError)
+		log.Println("Ошибка при чтении файла шаблона:", err)
+		return
+	}
+
+	data := struct {
+		FileName      string
+		FileSize      int64
+		RecipientName string
+	}{
+		FileName:      fileName,
+		FileSize:      handler.Size,
+		RecipientName: recipientName,
+	}
+
+	tmpl.Execute(w, data)
+}
+
+func UploadFile2(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20) // Устанавливаем максимальный размер файла 10MB
 
 	storageDir := "storage"

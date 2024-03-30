@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,7 +35,7 @@ h2 {
     font-size: 20px;
     position: absolute;
     top: 45px;
-    right: 180px;
+    right: 170px;
     color: white;
     text-decoration:  underline;
     text-decoration-skip-ink: none;
@@ -45,7 +46,7 @@ h2 {
     font-size: 20px;
     position: absolute;
     top: 45px;
-    left: 180px;
+    left: 150px;
     color: white;
     text-shadow: 3px 3px 3px rgb(170, 170, 255);
 }
@@ -66,6 +67,7 @@ label {
 }
 
 label[for="file"] {
+    margin-bottom: 19px;
     margin-right: 1px; /* Добавляем отступ справа */
     margin-left: 10px;
 }
@@ -76,7 +78,7 @@ input {
 
 input[type="file"] {
     padding: 5px 10px;
-    background-image: linear-gradient(90deg, #647dee,  #7f53ac);
+    background-image: linear-gradient(90deg, #4a39ff,  #2589fb);
     color: white; /* Белый цвет текста */
     border: none;
     border-radius: 8px;
@@ -85,7 +87,7 @@ input[type="file"] {
 
 .upload-button {
     padding: 5px 10px;
-    background-image: linear-gradient(90deg, #FF1700, #DD4A48);
+    background-image: linear-gradient(90deg, blue, purple);
     color: white; /* Белый цвет текста */
     border: none;
     border-radius: 8px;
@@ -109,6 +111,18 @@ input[type="file"] {
     border-radius: 10px;
     overflow-y: auto; /* Добавляем прокрутку по вертикали */
     box-shadow: 2px 2px 5px 2px white; /* Добавляем тень */
+}
+
+.file-container::-webkit-scrollbar {
+    width: 5px; /* Ширина полосы прокрутки */
+}
+
+.file-container::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Цвет фона полосы прокрутки */
+}
+
+.file-container::-webkit-scrollbar-thumb {
+    background: #7ccdff; /* Цвет полосы прокрутки */
 }
 
 .search-input:focus {
@@ -194,16 +208,16 @@ button#changeThemeButton {
     </div>
     <div class="file-container">
         <h2>Files available for download: <i class="fa fa-search"></i></h2>
-        <input type="text" placeholder="Search files..." class="search-input">
-        <button class="delete-all-button">Delete All Files</button>
-        <ul>
+        <input type="text" placeholder="Search files..." class="search-input" oninput="searchFiles()">
+        <button class="delete-all-button" onclick="deleteAllFiles()">Delete All Files</button>
+        <ul id="file-list">
             {{range .Files}}
                 <li><a href="/download/{{.}}">{{.}}</a></li>
             {{end}}
         </ul>
-    </div>   
+    </div>
     <div id="profile">{{.UserName}}</div>
-    <div id="logout">Назад</div>
+    <div id="logout">Exit</div>
     <script>
          document.getElementById("logout").addEventListener("click", function() {
             window.location.href = "/"; 
@@ -235,7 +249,28 @@ button.style.color = "black";
 // Устанавливаем текст кнопки
 button.innerText = "View";
 button.style.lineHeight = button.clientHeight + "px";
+function searchFiles() {
+        var input, filter, ul, li, a, i, txtValue;
+        input = document.querySelector('.search-input');
+        filter = input.value.toUpperCase();
+        ul = document.getElementById("file-list");
+        li = ul.getElementsByTagName('li');
+        for (i = 0; i < li.length; i++) {
+            a = li[i].getElementsByTagName("a")[0];
+            txtValue = a.textContent || a.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                li[i].style.display = "";
+            } else {
+                li[i].style.display = "none";
+            }
+        }
+    }
 
+    function deleteAllFiles() {
+        var ul = document.getElementById("file-list");
+        ul.innerHTML = ""; // Удаление всех элементов списка файлов
+    }
     </script> 
 </body>
 </html>
+
