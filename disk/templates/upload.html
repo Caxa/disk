@@ -229,6 +229,15 @@ button#changeThemeButton {
                 <input type="submit" value="Upload" class="upload-button">
                 <label for="recipient">Recipient:</label>
                 <input type="text" id="recipient" name="recipient"><br><br>
+
+            </form>
+            <form action="/delete" method="post">
+                <select name="fileToDelete" id="fileToDelete">
+                    {{range .Files}}
+                        <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+                <button type="submit" class="delete-button">Delete File</button>
             </form>
         </div>
     </div>
@@ -306,7 +315,7 @@ ruFlag.addEventListener("click", function() {
     document.getElementById("changeThemeButton").innerText = "View";
     document.querySelector('label[for="recipient"]').innerText = "Recipient:";
     document.querySelector(".search-input").setAttribute("placeholder", "Search files...");
-    document.querySelector(".delete-all-button").innerText = "Delete All Files";
+    document.querySelector(".delete-all-button").innerText = "Delete All File";
     document.getElementById('file-label').innerText = "Select file to upload:";
     document.getElementById('upload-button').value = "Upload";
 });

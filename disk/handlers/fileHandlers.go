@@ -79,115 +79,6 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-func UploadFile2(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(10 << 20) // Устанавливаем максимальный размер файла 10MB
-
-	storageDir := "storage"
-	if _, err := os.Stat(storageDir); os.IsNotExist(err) {
-		os.Mkdir(storageDir, 0755)
-	}
-
-	file, handler, err := r.FormFile("file")
-	if err != nil {
-		http.Error(w, "Ошибка при получении файла", http.StatusInternalServerError)
-		log.Println("Ошибка при получении файла:", err)
-		return
-	}
-	defer file.Close()
-
-	fileName := handler.Filename
-	recipientName := r.FormValue("recipient")
-	// Создаем уникальное имя файла на основе времени отправления
-	timeFormat := time.Now().Format("2006-01-02_15-04-05")
-	//newFileName := fmt.Sprintf("%s_%s", timeFormat, fileName)
-
-	newFileName := fmt.Sprintf("%s_%s_%s", timeFormat, recipientName, fileName)
-
-	userID, _ := getUserIDFromDB(recipientName)
-
-	fmt.Fprintf(w, "Файл загружен: %+v\n", handler.Filename)
-	fmt.Fprintf(w, "Размер файла: %+v\n", handler.Size)
-	fmt.Fprintf(w, "Отправлено пользователю: %s\n", recipientName)
-
-	dst, err := os.Create(filepath.Join(storageDir, newFileName))
-	if err != nil {
-		http.Error(w, "Ошибка при создании файла", http.StatusInternalServerError)
-		log.Println("Ошибка при создании файла:", err)
-		return
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		http.Error(w, "Ошибка при сохранении файла на сервере", http.StatusInternalServerError)
-		log.Println("Ошибка при сохранении файла на сервере:", err)
-		return
-	}
-
-	saveFileToDB(fileName, newFileName, recipientName, userID)
-}
-
-func UploadFile1(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(10 << 20) // Устанавливаем максимальный размер файла 10MB
-
-	storageDir := "storage"
-	if _, err := os.Stat(storageDir); os.IsNotExist(err) {
-		os.Mkdir(storageDir, 0755)
-	}
-
-	file, handler, err := r.FormFile("file")
-	if err != nil {
-		http.Error(w, "Ошибка при получении файла", http.StatusInternalServerError)
-		log.Println("Ошибка при получении файла:", err)
-		return
-	}
-	defer file.Close()
-
-	fileName := handler.Filename
-	fileExt := filepath.Ext(fileName)
-
-	// Получаем имя пользователя из запроса
-	userIDStr := r.URL.Query().Get("id")
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		http.Error(w, "Неверный идентификатор пользователя", http.StatusBadRequest)
-		return
-	}
-
-	userName, err := GetUserNameByIDFromDB(userID)
-	if err != nil {
-		http.Error(w, "Ошибка при получении имени пользователя из базы данных", http.StatusInternalServerError)
-		return
-	}
-
-	// Создаем уникальное имя файла на основе времени отправления, имени пользователя и имени файла
-	timeFormat := time.Now().Format("2006-01-02_15")
-	newFileName := fmt.Sprintf("%s_%s_%s%s", timeFormat, userName, fileName, fileExt)
-
-	fmt.Fprintf(w, "Файл загружен: %+v\n", handler.Filename)
-	fmt.Fprintf(w, "Размер файла: %+v\n", handler.Size)
-	fmt.Fprintf(w, "Отправлено пользователю: %s\n", userName)
-
-	dst, err := os.Create(filepath.Join(storageDir, newFileName))
-	if err != nil {
-		http.Error(w, "Ошибка при создании файла", http.StatusInternalServerError)
-		log.Println("Ошибка при создании файла:", err)
-		return
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		http.Error(w, "Ошибка при сохранении файла на сервере", http.StatusInternalServerError)
-		log.Println("Ошибка при сохранении файла на сервере:", err)
-		return
-	}
-
-	// Преобразуем userID в строку
-	userIDStr = strconv.Itoa(userID)
-
-	// Сохраняем информацию о файле в базе данных
-	saveFileToDB(fileName, newFileName, userName, userIDStr)
-}
-
 func getUserIDFromDB(username string) (string, error) {
 	var userID string
 	query := "SELECT id FROM users WHERE login = $1"
@@ -209,6 +100,54 @@ func saveFileToDB(originalFilename, storedFilename, recipientName string, userID
 	if err != nil {
 		log.Fatal("Failed to insert file into database:", err)
 	}
+}
+
+func DeleteFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
+
+	fileToDelete := r.FormValue("fileToDelete")
+
+	// Удаление файла из базы данных
+	err := DeleteFileFromDB(fileToDelete)
+	if err != nil {
+		http.Error(w, "Ошибка при удалении файла из базы данных", http.StatusInternalServerError)
+		return
+	}
+
+	// Удаление файла из хранилища
+	err = DeleteFileFromStorage(fileToDelete)
+	if err != nil {
+		http.Error(w, "Ошибка при удалении файла из хранилища", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "Файл успешно удален")
+}
+
+func DeleteFileFromDB(fileName string) error {
+	query := "DELETE FROM files WHERE stored_filename = $1"
+	_, err := Db.Exec(query, fileName)
+	if err != nil {
+		log.Println("Ошибка при удалении файла из базы данных:", err)
+		return err
+	}
+	return nil
+}
+
+func DeleteFileFromStorage(fileName string) error {
+	storageDir := "storage"
+	filePath := filepath.Join(storageDir, fileName)
+
+	err := os.Remove(filePath)
+	if err != nil {
+		log.Println("Ошибка при удалении файла из хранилища:", err)
+		return err
+	}
+
+	return nil
 }
 
 func DownloadFile(w http.ResponseWriter, r *http.Request) {
