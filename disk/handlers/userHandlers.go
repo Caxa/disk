@@ -10,7 +10,7 @@ import (
 	"text/template"
 	"time"
 
-	//"golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/bcrypt"
 
 	_ "github.com/lib/pq"
 )
@@ -112,12 +112,14 @@ func Home(w http.ResponseWriter, r *http.Request) {
 			return
 		} else if login != "" && password != "" {
 			id := AuthenticateUser(ctx, login, password)
-			if id.IDuser != 0 {
-				http.Redirect(w, r, "/main?id="+strconv.Itoa(id.IDuser), http.StatusFound)
+			if id == -1 {
+				http.ServeFile(w, r, "templates/errorModal.html") // Обработка неверного пароля
+				return
+			} else if id == 0 {
+				RegisterHandler(w, r) // Регистрация нового пользователя
 				return
 			} else {
-				// Обработка неправильного пароля
-				http.ServeFile(w, r, "templates/errorModal.html")
+				http.Redirect(w, r, "/main?id="+strconv.Itoa(id), http.StatusFound)
 				return
 			}
 		}
@@ -127,37 +129,121 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Home1(w http.ResponseWriter, r *http.Request) {
+func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	if r.Method == "POST" {
+		// Обработка POST запроса для регистрации пользователя
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "Failed to parse form", http.StatusInternalServerError)
+			return
+		}
+		login := r.Form.Get("login")
+		password := r.Form.Get("password")
 
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		hashedPassword, err := HashPassword(password) // Хешируем пароль
+		if err != nil {
+			log.Fatal("Failed to hash password:", err)
+			http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+			return
+		}
+
+		query := "INSERT INTO users (login, password) VALUES ($1, $2)"
+		_, err = Db.Exec(query, login, hashedPassword) // Сохраняем хешированный пароль в базу данных
+		if err != nil {
+			log.Fatal("Failed to insert user:", err)
+			http.Error(w, "Failed to insert user", http.StatusInternalServerError)
+			return
+		}
+		id := AuthenticateUser(ctx, login, password)
+
+		// Перенаправление на страницу загрузки файла
+		http.Redirect(w, r, "/main?id="+strconv.Itoa(id), http.StatusFound)
 		return
 	}
+	Tmpl1.Execute(w, nil)
+}
 
-	switch r.Method {
-	case "GET":
-		Tmpl1.Execute(w, nil)
-	case "POST":
-		login := r.FormValue("login")
-		password := r.FormValue("password")
-		if login == "admin" && password == "admin" {
-			// Если логин и пароль равны "admin", выводим таблицы users и files
-			showTables(w)
-			return
-		} else if login != "" && password != "" {
-			id := AuthenticateUser(ctx, login, password)
-			if id.IDuser != 0 {
-				http.Redirect(w, r, "/main?id="+strconv.Itoa(id.IDuser), http.StatusFound)
-				return
-			} else {
-				RegisterHandler(w, r) // Регистрация нового пользователя
-				return
-			}
+func AuthenticateUser(ctx context.Context, login, password string) int {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	query := "SELECT id, password FROM users WHERE login = $1"
+	var currentUser User
+	var hashedPassword string
+	err := Db.QueryRowContext(ctx, query, login).Scan(&currentUser.IDuser, &hashedPassword)
+	if err != nil {
+		log.Println("Ошибка при выполнении запроса:", err)
+		return 0 // Возвращаем 0, если пользователя не найден
+	}
+
+	if CheckPasswordHash(password, hashedPassword) {
+		return currentUser.IDuser // Возвращаем ID пользователя, если пароль верный
+	} else {
+		log.Println("Неверный пароль для пользователя:", login)
+		return -1 // Возвращаем -1, если пароль неверный
+	}
+}
+
+func HashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
+func OpenDatabase() {
+	var err error
+	Db, err = sql.Open("postgres", "user=postgres password=1234 dbname=airat sslmode=disable")
+	if err != nil {
+		log.Println("Failed to connect to the database:", err)
+	} else {
+		err = Db.Ping()
+		if err != nil {
+			log.Println("Failed to ping the database:", err)
+		} else {
+			log.Println("Successfully connected to the database")
 		}
-		http.Error(w, "Неверный логин или пароль", http.StatusUnauthorized)
-	default:
-		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+	}
+}
+
+func SearchFilesByQuery(searchQuery string) []string {
+	var searchResults []string
+
+	query := "SELECT stored_filename FROM files WHERE original_filename ILIKE $1 OR recipient_name ILIKE $1"
+	rows, err := Db.Query(query, "%"+searchQuery+"%")
+	if err != nil {
+		log.Println("Ошибка при выполнении запроса поиска файлов:", err)
+		return searchResults
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var fileName string
+		if err := rows.Scan(&fileName); err != nil {
+			log.Println("Ошибка при сканировании строки:", err)
+			continue
+		}
+		searchResults = append(searchResults, fileName)
+	}
+
+	return searchResults
+}
+
+func SearchFiles(w http.ResponseWriter, r *http.Request) {
+	searchQuery := r.FormValue("searchQuery")
+
+	searchResults := SearchFilesByQuery(searchQuery)
+
+	fmt.Fprintf(w, "Search Results:\n")
+	for _, file := range searchResults {
+		fmt.Fprintf(w, "%s\n", file)
 	}
 }
 
@@ -251,96 +337,5 @@ func showTables(w http.ResponseWriter) {
 		uploadTimeString := uploadTime.Format("2006-01-02 15:04:05") // Форматирование времени в строку
 
 		fmt.Fprintf(w, "ID: %d, Stored Filename: %s, Original Filename: %s, Recipient ID: %d, Recipient Name: %s, Upload Time: %s\n", id, storedFilename, originalFilename, recipientID, recipientName, uploadTimeString)
-	}
-}
-
-func AuthenticateUser(ctx context.Context, login, password string) User {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
-
-	query := "SELECT id FROM users WHERE login = $1 AND password = $2"
-	var currentUser User
-	err := Db.QueryRowContext(ctx, query, login, password).Scan(&currentUser.IDuser)
-	if err != nil {
-		log.Println("Ошибка при выполнении запроса:", err)
-		return User{} // Возвращаем пустую структуру User в случае ошибки
-	}
-	return currentUser
-}
-
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if r.Method == "POST" {
-		// Обработка POST запроса для регистрации пользователя
-		err := r.ParseForm()
-		if err != nil {
-			http.Error(w, "Failed to parse form", http.StatusInternalServerError)
-			return
-		}
-		login := r.Form.Get("login")
-		password := r.Form.Get("password")
-
-		query := "INSERT INTO users (login, password) VALUES ($1, $2)"
-		_, err = Db.Exec(query, login, password)
-		if err != nil {
-			log.Fatal("Failed to insert user:", err)
-			http.Error(w, "Failed to insert user", http.StatusInternalServerError)
-			return
-		}
-		id := AuthenticateUser(ctx, login, password)
-
-		// Перенаправление на страницу загрузки файла
-		http.Redirect(w, r, "/main?id="+strconv.Itoa(id.IDuser), http.StatusFound)
-		return
-	}
-	Tmpl1.Execute(w, nil)
-}
-
-func OpenDatabase() {
-	var err error
-	Db, err = sql.Open("postgres", "user=postgres password=1234 dbname=airat sslmode=disable")
-	if err != nil {
-		log.Println("Failed to connect to the database:", err)
-	} else {
-		err = Db.Ping()
-		if err != nil {
-			log.Println("Failed to ping the database:", err)
-		} else {
-			log.Println("Successfully connected to the database")
-		}
-	}
-}
-
-func SearchFilesByQuery(searchQuery string) []string {
-	var searchResults []string
-
-	query := "SELECT stored_filename FROM files WHERE original_filename ILIKE $1 OR recipient_name ILIKE $1"
-	rows, err := Db.Query(query, "%"+searchQuery+"%")
-	if err != nil {
-		log.Println("Ошибка при выполнении запроса поиска файлов:", err)
-		return searchResults
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var fileName string
-		if err := rows.Scan(&fileName); err != nil {
-			log.Println("Ошибка при сканировании строки:", err)
-			continue
-		}
-		searchResults = append(searchResults, fileName)
-	}
-
-	return searchResults
-}
-
-func SearchFiles(w http.ResponseWriter, r *http.Request) {
-	searchQuery := r.FormValue("searchQuery")
-
-	searchResults := SearchFilesByQuery(searchQuery)
-
-	fmt.Fprintf(w, "Search Results:\n")
-	for _, file := range searchResults {
-		fmt.Fprintf(w, "%s\n", file)
 	}
 }

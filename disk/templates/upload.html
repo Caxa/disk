@@ -189,10 +189,36 @@ button#changeThemeButton {
     background-color: black; 
     color: black;
 }
+#uk-flag {
+    width: 30px;
+    height: 17px;
+    position: absolute;
+    margin-top: 40px;
+    right: 15px; /* Изменяем правый отступ на 10px */
+}
+
+#ru-flag {
+    display: none;
+}
+
+#ru-flag {
+    width: 40px;
+    height: 18px;
+    position: absolute;
+    margin-top: 40px;
+    right: 10px;
+}
+
+.file-checkbox {
+    width: 13px;
+    height: 13px;
+}
 
     </style>
 </head>
 <body>
+    <img id="ru-flag" src="https://upload.wikimedia.org/wikipedia/en/f/f3/Flag_of_Russia.svg" alt="Флаг России">
+    <img id="uk-flag" src="https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg" alt="Флаг Великобритании">
     <div class="upload-header">
         <button id="changeThemeButton">View</button>
         
@@ -249,6 +275,41 @@ button.style.color = "black";
 // Устанавливаем текст кнопки
 button.innerText = "View";
 button.style.lineHeight = button.clientHeight + "px";
+
+    var ukFlag = document.getElementById("uk-flag");
+    var ruFlag = document.getElementById("ru-flag");
+
+    ukFlag.addEventListener("click", function() {
+    // Скрыть флаг Великобритании и показать флаг России
+    ukFlag.style.display = "none";
+    ruFlag.style.display = "block";
+
+    // Изменить язык на русский
+
+    document.getElementById("logout").innerText = "Выход";
+    document.getElementById("changeThemeButton").innerText = "Вид";
+    document.querySelector('label[for="recipient"]').innerText = "Получатель:";
+    document.querySelector(".search-input").setAttribute("placeholder", "Поиск файлов...");
+    document.querySelector(".delete-all-button").innerText = "Удалить все файлы";
+    document.getElementById('file-label').innerText = "Выберите файл для загрузки:";
+    document.getElementById('upload-button').value = "Загрузить";
+});
+
+ruFlag.addEventListener("click", function() {
+    // Скрыть флаг России и показать флаг Великобритании
+    ruFlag.style.display = "none";
+    ukFlag.style.display = "block";
+
+    // Изменить язык на английский
+
+    document.getElementById("logout").innerText = "Exit";
+    document.getElementById("changeThemeButton").innerText = "View";
+    document.querySelector('label[for="recipient"]').innerText = "Recipient:";
+    document.querySelector(".search-input").setAttribute("placeholder", "Search files...");
+    document.querySelector(".delete-all-button").innerText = "Delete All Files";
+    document.getElementById('file-label').innerText = "Select file to upload:";
+    document.getElementById('upload-button').value = "Upload";
+});
 function searchFiles() {
         var input, filter, ul, li, a, i, txtValue;
         input = document.querySelector('.search-input');
@@ -270,6 +331,7 @@ function searchFiles() {
         var ul = document.getElementById("file-list");
         ul.innerHTML = ""; // Удаление всех элементов списка файлов
     }
+
     </script> 
 </body>
 </html>
