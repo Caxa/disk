@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Модальное окно</title>
+    <style>
+        /* CSS для стилизации модального окна */
+        .modal {
+            display: block;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fefefe;
+            padding: 10px;
+            border: 1px solid #888;
+            width: 200px;
+        }
+    
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 20px;
+        }
+    
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="modal">
+        <span class="close" onclick="closeModal()">×</span>
+        <h2>Информация о загруженном файле:</h2>
+        <p>Файл: {{.FileName}}</p>
+        <p>Размер файла: {{.FileSize}} байт</p>
+        <p>Отправлено пользователю: {{.RecipientName}}</p>
+    </div>
+
+    <script>
+        function closeModal() {
+            document.querySelector('.modal').style.display = 'none';
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

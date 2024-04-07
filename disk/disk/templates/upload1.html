@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <style>
+        body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    margin: 0;
+    background: url('https://img2.akspic.ru/previews/5/2/4/2/5/152425/152425-macbook-macbook_pro-apple-imac_pro-macos_mojave-x750.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: white; /* Устанавливаем белый цвет текста */
+}
+
+.upload-header {
+    display: flex;
+    align-items: center;
+    padding-top: 85px;
+}
+
+h2 {
+    text-align: center;
+    margin-top: 5px;
+    font-size: 25px;
+}
+
+#logout {
+    font-size: 20px;
+    position: absolute;
+    top: 45px;
+    right: 170px;
+    color: white;
+    text-decoration:  underline;
+    text-decoration-skip-ink: none;
+    cursor: pointer;
+}
+
+#profile {
+    font-size: 20px;
+    position: absolute;
+    top: 45px;
+    left: 150px;
+    color: white;
+    text-shadow: 3px 3px 3px rgb(170, 170, 255);
+}
+
+#profile::after {
+    content: "•";
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    transform: translateY(-50%);
+    color: white;
+    font-size: 20px;
+}
+
+label {
+    margin-right: 10px; /* Отступ между элементами */
+    font-size: 20px;
+}
+
+label[for="file"] {
+    margin-bottom: 19px;
+    margin-right: 1px; /* Добавляем отступ справа */
+    margin-left: 10px;
+}
+
+input {
+    margin-right: 10px; /* Отступ между элементами */
+}
+
+input[type="file"] {
+    padding: 5px 10px;
+    background-image: linear-gradient(90deg, #4a39ff,  #2589fb);
+    color: white; /* Белый цвет текста */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.upload-button {
+    padding: 5px 10px;
+    background-image: linear-gradient(90deg, blue, purple);
+    color: white; /* Белый цвет текста */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-left: 5px;
+    height: 31px;
+}
+
+.upload-container {
+    display: flex;
+    align-items: center;
+}
+
+.file-container {
+    position: relative;
+    padding-top: 20px;
+    flex: 0.92; /* Растягиваем контейнер до конца страницы */
+    width: 55%;
+    margin: 20px auto;
+    border: 2px solid white; /* Белая обводка */
+    border-radius: 10px;
+    overflow-y: auto; /* Добавляем прокрутку по вертикали */
+    box-shadow: 2px 2px 5px 2px white; /* Добавляем тень */
+}
+
+.file-container::-webkit-scrollbar {
+    width: 5px; /* Ширина полосы прокрутки */
+}
+
+.file-container::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Цвет фона полосы прокрутки */
+}
+
+.file-container::-webkit-scrollbar-thumb {
+    background: #7ccdff; /* Цвет полосы прокрутки */
+}
+
+.search-input:focus {
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    outline: none;
+}
+
+.search-input {
+    border-radius: 10px;
+    height: 25px;
+    outline: none;
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    padding-left: 5px;
+    width: 150px;
+    margin-top: 10px;
+    margin-left: 20px;
+}
+
+a {
+    color: white; /* Изменение цвета ссылок на белый */
+    text-decoration: none; /* Убирает подчеркивание у ссылок */
+}
+
+a:hover {
+    text-decoration: underline; /* Подчеркивание при наведении на ссылку */
+}
+
+#recipient {
+    border-radius: 10px;
+    height: 20px;
+    outline: none;
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    padding-left: 5px;
+    width: 140px;
+}
+button#changeThemeButton {
+    font-family:Dejavu Sans, Arial, Verdana, sans-serif;
+    width: 40px;
+    height: 20px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: white;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background-color 0.7s, color 0.7s; /* Добавляем переходы на изменение цвета */
+}
+
+.button-clicked {
+    background-color: black; 
+    color: black;
+}
+
+#uk-flag {
+    width: 30px;
+    height: 17px;
+    position: absolute;
+    margin-top: 40px;
+    right: 15px; /* Изменяем правый отступ на 10px */
+}
+
+#ru-flag {
+    display: none;
+}
+
+#ru-flag {
+    width: 40px;
+    height: 18px;
+    position: absolute;
+    margin-top: 40px;
+    right: 10px;
+}
+
+.delete-button {
+    border-radius: 10px;
+    height: 32px;
+    outline: none;
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    width: 130px;
+    margin-right: 20px;
+}
+
+.search-delete-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.file-checkbox {
+    width: 13px;
+    height: 13px;
+}
+
+select {
+    border-radius: 10px;
+    height: 32px;
+    outline: none;
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    width: 250px;
+}
+
+body, h2, label, input, a {
+    Font-family: Candara, Calibri, Segoe, Segoe UI, Optima, Arial, sans-serif;
+}
+
+    </style>
+</head>
+<body>
+    <img id="ru-flag" src="https://upload.wikimedia.org/wikipedia/en/f/f3/Flag_of_Russia.svg" alt="Флаг России">
+    <img id="uk-flag" src="https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg" alt="Флаг Великобритании">
+    <div class="upload-header">
+        <label for="file" id="select">Select file to upload:</label>
+        <button id="changeThemeButton">View</button>
+        <div class="upload-container">
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <input type="file" id="file" name="file" placeholder="Select file">
+                <input type="submit" value="Upload" class="upload-button" id="upload-button">
+                <label for="recipient">Recipient:</label>
+                <input type="text" id="recipient" name="recipient"><br><br>
+            </form>
+        </div>
+    </div>
+    <div class="file-container">
+        <h2 id="available">Files available for download: <i class="fa fa-search"></i></h2>
+        <div class="search-delete-container">
+            <input type="text" placeholder="Search files..." class="search-input" oninput="searchFiles()">
+            <form action="/delete" method="post" class="delete-form">
+                <select name="fileToDelete" id="fileToDelete">
+                    {{range .Files}}
+                        <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+                <button type="submit" class="delete-button" id="df" onclick="deleteAllFiles">Delete File</button>
+            </form>
+        </div>
+        <ul id="file-list">
+            {{range .Files}}
+                <li>
+                    <a href="/download/{{.}}">{{.}}</a>
+                </li>
+            {{end}}
+        </ul>
+    </div>
+    <div id="profile">{{.UserName}}</div>
+    <div id="logout">Exit</div>
+    <script>
+document.getElementById("changeThemeButton").addEventListener("click", function() {
+    var button = document.getElementById("changeThemeButton");
+    var currentBackground = document.body.style.backgroundImage;
+
+    if (currentBackground.includes('152425-macbook-macbook_pro-apple-imac_pro-macos_mojave-x750.jpg')) {
+        document.body.style.backgroundImage = "url('https://4kwallpapers.com/images/wallpapers/macos-mojave-sand-dunes-mojave-desert-california-night-dark-3840x2160-4030.jpg')";
+        button.style.backgroundColor = "black";
+        button.style.color = "white"; // установить цвет текста в белый, когда кнопка черная
+    } else {
+        document.body.style.backgroundImage = "url('https://img2.akspic.ru/previews/5/2/4/2/5/152425/152425-macbook-macbook_pro-apple-imac_pro-macos_mojave-x750.jpg')";
+        button.style.backgroundColor = "white";
+        button.style.color = "black"; // установить цвет текста в черный, когда кнопка белая
+    }
+
+    button.innerText = "View"; // установить текст кнопки
+});
+
+// Получаем элемент кнопки
+var button = document.getElementById("changeThemeButton");
+
+// Устанавливаем начальные стили кнопки
+button.style.backgroundColor = "white";
+button.style.color = "black";
+
+// Устанавливаем текст кнопки
+button.innerText = "View";
+button.style.lineHeight = button.clientHeight + "px";
+
+var translations = {
+    "en": {
+        "delete-button": "Delete File",
+        "filesAvailable": "Files available for download:",
+        "selectFile": "Select file to upload",
+        "upload": "Upload"
+    },
+    "ru": {
+        "delete": "Удалить файл",
+        "filesAvailable": "Доступные файлы для загрузки:",
+        "selectFile": "Выберите файл для загрузки",
+        "upload": "Загрузить"
+    }
+};
+
+var ukFlag = document.getElementById("uk-flag");
+var ruFlag = document.getElementById("ru-flag");
+
+ukFlag.addEventListener("click", function() {
+    // Скрыть флаг Великобритании и показать флаг России
+    ukFlag.style.display = "none";
+    ruFlag.style.display = "block";
+
+    // Изменить язык на русский
+    document.getElementById("logout").innerText = "Выход";
+    document.getElementById("changeThemeButton").innerText = "Вид";
+    document.querySelector('label[for="recipient"]').innerText = "Получатель:";
+    document.querySelector(".search-input").setAttribute("placeholder", "Поиск файлов...");
+    document.getElementById("available").innerText = "Доступные файлы для загрузки:";
+    document.getElementById("select").innerText = "Выберите файл для загрузки:";
+    document.getElementById("df").innerText = "Удалить файл";
+    document.getElementById("upload-button").value = translations["ru"]["upload"];
+    document.querySelector("file").setAttribute("placeholder", "Выберите файл");
+
+});
+
+ruFlag.addEventListener("click", function() {
+    // Скрыть флаг России и показать флаг Великобритании
+    ruFlag.style.display = "none";
+    ukFlag.style.display = "block";
+
+    // Изменить язык на английский
+    document.getElementById("logout").innerText = "Exit";
+    document.getElementById("changeThemeButton").innerText = "View";
+    document.querySelector('label[for="recipient"]').innerText = "Recipient:";
+    document.querySelector(".search-input").setAttribute("placeholder", "Search files...");
+    document.getElementById("available").innerText = "Files available for download:";
+    document.getElementById("select").innerText = "Select file to upload:";
+    document.getElementById("df").innerText = "Delete file";
+    document.getElementById("upload-button").value = translations["en"]["upload"];
+    document.querySelector("file").setAttribute("placeholder", "Select file");
+
+});
+function searchFiles() {
+        var input, filter, ul, li, a, i, txtValue;
+        input = document.querySelector('.search-input');
+        filter = input.value.toUpperCase();
+        ul = document.getElementById("file-list");
+        li = ul.getElementsByTagName('li');
+        for (i = 0; i < li.length; i++) {
+            a = li[i].getElementsByTagName("a")[0];
+            txtValue = a.textContent || a.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                li[i].style.display = "";
+            } else {
+                li[i].style.display = "none";
+            }
+        }
+    }
+
+    function deleteAllFiles() {
+        var ul = document.getElementById("file-list");
+        ul.innerHTML = ""; // Удаление всех элементов списка файлов
+    }
+
+    document.getElementById("logout").addEventListener("click", function() {
+            window.location.href = "/"; 
+});
+
+</script>
+
+</body>
+</html>
