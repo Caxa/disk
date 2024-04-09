@@ -15,7 +15,6 @@ func main() {
 	http.HandleFunc("/", handlers.Home)
 	http.HandleFunc("/main", handlers.Index)
 	http.HandleFunc("/upload", handlers.UploadFile)
-	http.HandleFunc("/modal", handlers.Modal)
 	http.HandleFunc("/download/", handlers.DownloadFile)
 	http.HandleFunc("/delete", handlers.DeleteFile)
 	fmt.Println("Server is running on http://localhost:8080")
