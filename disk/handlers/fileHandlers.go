@@ -17,6 +17,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
+func Modal(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func UploadFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20) // Устанавливаем максимальный размер файла 10MB
 
@@ -35,10 +39,11 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 
 	fileName := handler.Filename
 	recipientName := r.FormValue("recipient")
+	senderName := r.FormValue("sender")
 
 	// Создаем уникальное имя файла на основе времени отправления
 	timeFormat := time.Now().Format("2006-01-02_15-04-05")
-	newFileName := fmt.Sprintf("%s_%s_%s", timeFormat, recipientName, fileName)
+	newFileName := fmt.Sprintf("%s_%s->%s_%s", timeFormat, senderName, recipientName, fileName)
 
 	userID, _ := getUserIDFromDB(recipientName)
 
@@ -77,6 +82,8 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl.Execute(w, data)
+	//http.Redirect(w, r, "/main?id="+strconv.Itoa(id), http.StatusFound)
+
 }
 
 func getUserIDFromDB(username string) (string, error) {

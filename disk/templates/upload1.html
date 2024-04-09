@@ -25,9 +25,9 @@
 }
 
 h2 {
-    font-family: Bookman, URW Bookman L, serif;
     text-align: center;
     margin-top: 5px;
+    font-size: 25px;
 }
 
 #logout {
@@ -140,18 +140,6 @@ input[type="file"] {
     margin-left: 20px;
 }
 
-.delete-all-button {
-    margin-left: 423px;
-    width: 160px;
-    height: 32px;
-    border-radius: 10px;
-    outline: none;
-    border: 3px solid #a6f2ff;
-}
-
-.delete-all-button:active {
-    transform: scale(0.98); /* Уменьшаем размер кнопки на 5% при нажатии */
-}
 a {
     color: white; /* Изменение цвета ссылок на белый */
     text-decoration: none; /* Убирает подчеркивание у ссылок */
@@ -170,7 +158,7 @@ a:hover {
     width: 140px;
 }
 button#changeThemeButton {
-    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    font-family:Dejavu Sans, Arial, Verdana, sans-serif;
     width: 40px;
     height: 20px;
     position: absolute;
@@ -209,35 +197,71 @@ button#changeThemeButton {
     right: 10px;
 }
 
+.delete-button {
+    border-radius: 10px;
+    height: 32px;
+    outline: none;
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    width: 130px;
+    margin-right: 20px;
+}
+
+.search-delete-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 .file-checkbox {
     width: 13px;
     height: 13px;
 }
+
+select {
+    border-radius: 10px;
+    height: 32px;
+    outline: none;
+    border: 3px solid #a6f2ff; /* Голубая обводка при фокусе */
+    width: 250px;
+}
+
+body, h2, label, input, a {
+    Font-family: Candara, Calibri, Segoe, Segoe UI, Optima, Arial, sans-serif;
+}
+
     </style>
 </head>
 <body>
     <img id="ru-flag" src="https://upload.wikimedia.org/wikipedia/en/f/f3/Flag_of_Russia.svg" alt="Флаг России">
     <img id="uk-flag" src="https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg" alt="Флаг Великобритании">
     <div class="upload-header">
-        <label for="file" id="file-label">Select file to upload:</label>
+        <label for="file" id="select">Select file to upload:</label>
         <button id="changeThemeButton">View</button>
         <div class="upload-container">
             <form action="/upload" method="post" enctype="multipart/form-data">
-                <input type="file" id="file" name="file">
+                <input type="file" id="file" name="file" placeholder="Select file">
                 <input type="submit" value="Upload" class="upload-button" id="upload-button">
                 <label for="recipient">Recipient:</label>
+                <input type="text" id="sender" value="{{.UserName}}" name="sender" style="display: none; pointer-events: none" />
                 <input type="text" id="recipient" name="recipient"><br><br>
             </form>
         </div>
     </div>
     <div class="file-container">
-        <h2>Files available for download: <i class="fa fa-search"></i></h2>
-        <input type="text" placeholder="Search files..." class="search-input">
-        <button class="delete-all-button">Delete All Files</button>
-        <ul>
+        <h2 id="available">Files available for download: <i class="fa fa-search"></i></h2>
+        <div class="search-delete-container">
+            <input type="text" placeholder="Search files..." class="search-input" oninput="searchFiles()">
+            <form action="/delete" method="post" class="delete-form">
+                <select name="fileToDelete" id="fileToDelete">
+                    {{range .Files}}
+                        <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+                <button type="submit" class="delete-button" id="df" onclick="deleteAllFiles">Delete File</button>
+            </form>
+        </div>
+        <ul id="file-list">
             {{range .Files}}
                 <li>
-                    <input type="checkbox" class="file-checkbox">
                     <a href="/download/{{.}}">{{.}}</a>
                 </li>
             {{end}}
@@ -246,9 +270,6 @@ button#changeThemeButton {
     <div id="profile">{{.UserName}}</div>
     <div id="logout">Exit</div>
     <script>
-        document.getElementById("logout").addEventListener("click", function() {
-            window.location.href = "/"; 
-        });
 document.getElementById("changeThemeButton").addEventListener("click", function() {
     var button = document.getElementById("changeThemeButton");
     var currentBackground = document.body.style.backgroundImage;
@@ -277,23 +298,40 @@ button.style.color = "black";
 button.innerText = "View";
 button.style.lineHeight = button.clientHeight + "px";
 
-    var ukFlag = document.getElementById("uk-flag");
-    var ruFlag = document.getElementById("ru-flag");
+var translations = {
+    "en": {
+        "delete-button": "Delete File",
+        "filesAvailable": "Files available for download:",
+        "selectFile": "Select file to upload",
+        "upload": "Upload"
+    },
+    "ru": {
+        "delete": "Удалить файл",
+        "filesAvailable": "Доступные файлы для загрузки:",
+        "selectFile": "Выберите файл для загрузки",
+        "upload": "Загрузить"
+    }
+};
 
-    ukFlag.addEventListener("click", function() {
+var ukFlag = document.getElementById("uk-flag");
+var ruFlag = document.getElementById("ru-flag");
+
+ukFlag.addEventListener("click", function() {
     // Скрыть флаг Великобритании и показать флаг России
     ukFlag.style.display = "none";
     ruFlag.style.display = "block";
 
     // Изменить язык на русский
-
     document.getElementById("logout").innerText = "Выход";
     document.getElementById("changeThemeButton").innerText = "Вид";
     document.querySelector('label[for="recipient"]').innerText = "Получатель:";
     document.querySelector(".search-input").setAttribute("placeholder", "Поиск файлов...");
-    document.querySelector(".delete-all-button").innerText = "Удалить все файлы";
-    document.getElementById('file-label').innerText = "Выберите файл для загрузки:";
-    document.getElementById('upload-button').value = "Загрузить";
+    document.getElementById("available").innerText = "Доступные файлы для загрузки:";
+    document.getElementById("select").innerText = "Выберите файл для загрузки:";
+    document.getElementById("df").innerText = "Удалить файл";
+    document.getElementById("upload-button").value = translations["ru"]["upload"];
+    document.querySelector("file").setAttribute("placeholder", "Выберите файл");
+
 });
 
 ruFlag.addEventListener("click", function() {
@@ -302,24 +340,41 @@ ruFlag.addEventListener("click", function() {
     ukFlag.style.display = "block";
 
     // Изменить язык на английский
-
     document.getElementById("logout").innerText = "Exit";
     document.getElementById("changeThemeButton").innerText = "View";
     document.querySelector('label[for="recipient"]').innerText = "Recipient:";
     document.querySelector(".search-input").setAttribute("placeholder", "Search files...");
-    document.querySelector(".delete-all-button").innerText = "Delete All Files";
-    document.getElementById('file-label').innerText = "Select file to upload:";
-    document.getElementById('upload-button').value = "Upload";
-});
-// Обработчик события для кнопки "Delete Selected Files"
-document.querySelector('.delete-selected-button').addEventListener('click', function() {
-    var checkboxes = document.querySelectorAll('.file-checkbox');
+    document.getElementById("available").innerText = "Files available for download:";
+    document.getElementById("select").innerText = "Select file to upload:";
+    document.getElementById("df").innerText = "Delete file";
+    document.getElementById("upload-button").value = translations["en"]["upload"];
+    document.querySelector("file").setAttribute("placeholder", "Select file");
 
-    checkboxes.forEach(function(checkbox) {
-        if (checkbox.checked) {
-            checkbox.parentNode.remove(); // Удаление файла, если чекбокс отмечен
+});
+function searchFiles() {
+        var input, filter, ul, li, a, i, txtValue;
+        input = document.querySelector('.search-input');
+        filter = input.value.toUpperCase();
+        ul = document.getElementById("file-list");
+        li = ul.getElementsByTagName('li');
+        for (i = 0; i < li.length; i++) {
+            a = li[i].getElementsByTagName("a")[0];
+            txtValue = a.textContent || a.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                li[i].style.display = "";
+            } else {
+                li[i].style.display = "none";
+            }
         }
-    });
+    }
+
+    function deleteAllFiles() {
+        var ul = document.getElementById("file-list");
+        ul.innerHTML = ""; // Удаление всех элементов списка файлов
+    }
+
+    document.getElementById("logout").addEventListener("click", function() {
+            window.location.href = "/"; 
 });
 
 </script>
