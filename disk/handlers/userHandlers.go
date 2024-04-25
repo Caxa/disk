@@ -35,8 +35,10 @@ func GetUserNameByIDFromDB(userID int) (string, error) {
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
+
 	userIDStr := r.URL.Query().Get("id")
 	userID, err := strconv.Atoi(userIDStr)
+
 	if err != nil {
 		http.Error(w, "Неверный идентификатор пользователя", http.StatusBadRequest)
 		return
@@ -57,9 +59,11 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Files    []string
 		UserName string
+		Id       int
 	}{
 		Files:    files,
 		UserName: userName,
+		Id:       userID,
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/upload1.html"))
@@ -70,9 +74,9 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetFilesByUserIDFromDB(userID int) ([]string, error) {
+func GetMYFilesByUserIDFromDB(userID int) ([]string, error) {
 	var files []string
-	query := "SELECT stored_filename FROM files WHERE recipient_id = $1"
+	query := "SELECT stored_filename FROM filess WHERE sender_id = $1"
 	rows, err := Db.Query(query, userID)
 	if err != nil {
 		log.Println("Ошибка при получении файлов из базы данных:", err)
@@ -90,6 +94,65 @@ func GetFilesByUserIDFromDB(userID int) ([]string, error) {
 	}
 
 	return files, nil
+}
+func GetFilesByUserIDFromDB(userID int) ([]string, error) {
+	var files []string
+	query := "SELECT stored_filename FROM filess WHERE recipient_id = $1"
+	rows, err := Db.Query(query, userID)
+	if err != nil {
+		log.Println("Ошибка при получении файлов из базы данных:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var fileName string
+		if err := rows.Scan(&fileName); err != nil {
+			log.Println("Ошибка при сканировании строки:", err)
+			return nil, err
+		}
+		files = append(files, fileName)
+	}
+
+	return files, nil
+}
+func Sent(w http.ResponseWriter, r *http.Request) {
+	userIDStr := r.URL.Query().Get("id")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "Неверный идентификатор пользователя", http.StatusBadRequest)
+		return
+	}
+
+	files, errFiles := GetMYFilesByUserIDFromDB(userID)
+
+	if errFiles != nil {
+		http.Error(w, "Ошибка при получении файлов из базы данных", http.StatusInternalServerError)
+		return
+	}
+
+	userName, errUserName := GetUserNameByIDFromDB(userID)
+	if errUserName != nil {
+		http.Error(w, "Ошибка при получении имени пользователя из базы данных", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Files    []string
+		UserName string
+		Id       int
+	}{
+		Files:    files,
+		UserName: userName,
+		Id:       userID,
+	}
+
+	tmpl := template.Must(template.ParseFiles("templates/sent_files.html"))
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
@@ -128,7 +191,44 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 	}
 }
+func Home1(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
+	switch r.Method {
+	case "GET":
+		Tmpl1.Execute(w, nil)
+	case "POST":
+		login := r.FormValue("login")
+		password := r.FormValue("password")
+		if login == "admin" && password == "admin" {
+			// Если логин и пароль равны "admin", выводим таблицы users и files
+			showTables(w)
+			return
+		} else if login != "" && password != "" {
+			id := AuthenticateUser(ctx, login, password)
+			if id == -1 { //
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte("Ваш пароль неверный"))
+				return
+			} else if id == 0 {
+				RegisterHandler(w, r) // Регистрация нового пользователя
+				return
+			} else {
+				http.Redirect(w, r, "/main?id="+strconv.Itoa(id), http.StatusFound)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Ваш пароль неверный"))
+	default:
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+	}
+}
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if r.Method == "POST" {

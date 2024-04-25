@@ -272,20 +272,7 @@ body, h2, label, input, a {
     <img id="ru-flag" src="https://upload.wikimedia.org/wikipedia/en/f/f3/Flag_of_Russia.svg" alt="Флаг России">
     <img id="uk-flag" src="https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg" alt="Флаг Великобритании">
     <div class="upload-header">
-        <label for="file" id="select">Select file to upload:</label>
         <button id="changeThemeButton">View</button>
-        <form action="/sent_files?id={{.Id}}" method="post" >
-        <button id="viewSentFilesButton" >View Sent Files</button>
-        </form>
-        <div class="upload-container">
-            <form action="/upload" method="post" enctype="multipart/form-data">
-                <input type="file" id="file" name="file" placeholder="Select file">
-                <input type="submit" value="Upload" class="upload-button" id="upload-button">
-                <label for="recipient">Recipient:</label>
-                <input type="text" id="sender" value="{{.UserName}}" name="sender" style="display: none; pointer-events: none" />
-                <input type="text" id="recipient" name="recipient"><br><br>
-            </form>
-        </div>
     </div>
     <div class="file-container">
         <h2 id="available">Files available for download: <i class="fa fa-search"></i></h2>
@@ -415,9 +402,8 @@ function searchFiles() {
     }
 
     document.getElementById("logout").addEventListener("click", function() {
-            window.location.href = "/"; 
+            window.location.href = "/main?id={{.Id}}"; 
 });
-
 
 
 </script>

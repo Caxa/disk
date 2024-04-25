@@ -1,24 +1,422 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Registration</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Registration</title>
+	<style>
+    
+	@import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+    overflow: hidden;
+  background: url('https://img2.akspic.ru/crops/2/3/4/9/6/169432/169432-svet-grafika-tsvetnoy-severnyj_polyus-dizajn-3840x2160.jpg') no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  font-family: 'Montserrat', sans-serif;
+  height: 100vh;
+  margin: -20px 0 50px; 
+}
+
+h1 {
+  font-weight: bold;
+  margin: 0;
+  color: rgb(77, 0, 77);
+}
+
+p {
+  font-size: 14px;
+  font-weight: 100;
+  line-height: 20px;
+  letter-spacing: 0.5px;
+  margin: 20px 0 30px;
+  color: rgb(77, 0, 77);
+}
+
+span {
+  font-size: 12px;
+  color: rgb(77, 0, 77);
+}
+
+button {
+  border-radius: 20px;
+  border: 1px solid purple;
+  background-color: purple;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 12px 45px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 rgba(188, 188, 255, 0);
+    transition: box-shadow 0.5s ease;
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+button:focus {
+  outline: none;
+}
+
+button:hover {
+    box-shadow: 1px 1.5px 1.5px 1.5px rgb(188, 188, 255);
+}
+
+form {
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 50px;
+  height: 100%;
+  text-align: center;
+}
+
+input {
+  background-color: #eee;
+  border: none;
+  padding: 12px 15px;
+  margin: 8px 0;
+  width: 90%;
+    border-radius: 10px;
+}
+
+.container {
+  background-color: #fff;
+  border-radius: 15px;
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 
+  0 10px 10px rgba(0,0,0,0.22);
+  position: relative;
+  overflow: hidden;
+  width: 1100px;
+  max-width: 100%;
+  height: 600px;
+    margin-top: 35px;
+}
+
+.form-container {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: all 0.6s ease-in-out;
+}
+
+.sign-in-container {
+  left: 50%;
+  width: 50%;
+  z-index: 2;
+}
+
+@keyframes show {
+  0%, 49.99% {
+    opacity: 0;
+    z-index: 1;
+  }
+  
+  50%, 100% {
+    opacity: 1;
+    z-index: 5;
+  }
+}
+
+.leftside {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    box-shadow: 2px 2px 2px 2px black;
+}
+
+h2 {
+    position: absolute;
+    top: 4%; /* Расположение текста по вертикали (30% от верха) */
+    left: 25%; /* Расположение текста по горизонтали (по центру) */
+    transform: translateX(-50%); /* Центрирование текста по горизонтали */
+    font-size: 2.5em; /* Размер текста */
+    color: rgb(77, 0, 77); /* Цвет текста */
+  text-shadow: 0px 0px 0.8px blue;
+}
+
+h3 {
+  position: absolute;
+  top: 18%;
+  left: 25%;
+  transform: translateX(-50%);
+  font-size: 0.85em;
+  color: rgb(77, 0, 77);
+  text-shadow: 0px 0px 0.5px blue;
+}
+
+input:focus {
+  outline: 1.8px solid purple;
+}
+
+.error-placeholder {
+    visibility: hidden;
+}
+
+		html {
+  box-sizing: border-box;
+}
+
+*,
+*:after,
+*:before {
+  box-sizing: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+.header {
+  padding: 10px 0;
+  background-color: #000;
+}
+
+.navigation {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 50px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: rgba(66, 114, 47, 1) url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:svgjs='http://svgjs.com/svgjs' width='1440' height='560' preserveAspectRatio='none' viewBox='0 0 1440 560'%3e%3cg mask='url(%26quot%3b%23SvgjsMask1166%26quot%3b)' fill='none'%3e%3crect width='1440' height='560' x='0' y='0' fill='url(%23SvgjsLinearGradient1167)'%3e%3c/rect%3e%3cpath d='M1440 0L1087.66 0L1440 233.38z' fill='rgba(255%2c 255%2c 255%2c .1)'%3e%3c/path%3e%3cpath d='M1087.66 0L1440 233.38L1440 384.81L1032.27 0z' fill='rgba(255%2c 255%2c 255%2c .075)'%3e%3c/path%3e%3cpath d='M1032.27 0L1440 384.81L1440 480.87L978.5699999999999 0z' fill='rgba(255%2c 255%2c 255%2c .05)'%3e%3c/path%3e%3cpath d='M978.57 0L1440 480.87L1440 528.48L420.45000000000005 0z' fill='rgba(255%2c 255%2c 255%2c .025)'%3e%3c/path%3e%3cpath d='M0 560L552.09 560L0 540.22z' fill='rgba(0%2c 0%2c 0%2c .1)'%3e%3c/path%3e%3cpath d='M0 540.22L552.09 560L743.04 560L0 337.02000000000004z' fill='rgba(0%2c 0%2c 0%2c .075)'%3e%3c/path%3e%3cpath d='M0 337.02L743.04 560L1151.6 560L0 196.96999999999997z' fill='rgba(0%2c 0%2c 0%2c .05)'%3e%3c/path%3e%3cpath d='M0 196.97000000000003L1151.6 560L1151.6899999999998 560L0 100.74000000000002z' fill='rgba(0%2c 0%2c 0%2c .025)'%3e%3c/path%3e%3c/g%3e%3cdefs%3e%3cmask id='SvgjsMask1166'%3e%3crect width='1440' height='560' fill='white'%3e%3c/rect%3e%3c/mask%3e%3clinearGradient x1='84.72%25' y1='-39.29%25' x2='15.28%25' y2='139.29%25' gradientUnits='userSpaceOnUse' id='SvgjsLinearGradient1167'%3e%3cstop stop-color='%230e2a47' offset='0'%3e%3c/stop%3e%3cstop stop-color='rgba(66%2c 114%2c 47%2c 1)' offset='1'%3e%3c/stop%3e%3c/linearGradient%3e%3c/defs%3e%3c/svg%3e") center/cover no-repeat;
+}
+
+.section__title {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.section__button {
+  background-color: transparent;
+  border: 2px solid white;
+  color: white;
+  font-weight: 700;
+  padding: 10px 20px;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+  transition: background-color .2s ease-in-out, color .2s ease-in-out;
+}
+
+.section__button:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+.section__button:focus-visible {
+  outline-color: yellow;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  padding: 30px;
+  overflow-y: auto;
+  display: none;
+}
+
+.modal__main {
+  position: relative;
+  max-width: 700px;
+  background-color: #fff;
+  margin: auto;
+  color: #000;
+  border-radius: 16px;
+  padding: 30px 60px 60px;
+  cursor: default;
+}
+
+.modal__title {
+  font-size: 60px;
+  margin-bottom: 30px;
+}
+
+.modal__container {
+  font-size: 30px;
+  margin-bottom: 30px;
+}
+
+.modal__btn {
+  background-color: red;
+  color: #fff;
+  font-size: 26px;
+  text-align: center;
+  display: block;
+  margin: 0 auto; 
+  border-radius: 20px;
+  border: none;
+  padding: 15px 30px;
+}
+
+.modal__close {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  outline: 1px solid transparent;
+  outline-offset: 3px;
+  transition: outline-color .15s ease-in-out;
+  border-radius: 3px;
+  padding: 0;
+  text-align: center;
+  display: block;
+  width: 30px;
+  height: 30px;
+}
+
+.modal__close:focus-visible {
+  outline-color: green;
+}
+	</style>
 </head>
+
 <body>
-    <h1>User Registration</h1>
-    <form action="/" method="post">
-        <div>
-            <label for="login">Login:</label>
-            <input type="text" id="login" name="login">
-        </div>We won't tell anyone your password
-        <div>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password">
-        </div>
-        <div>
-            <button type="submit">Register</button>
-        </div>
-    </form>
+	<div class="container" id="container">
+		<div class="form-container sign-in-container">
+			<form action="/" method="post">
+				<h1>Sign in</h1>
+				<span>or use your account</span>
+				<input type="text" id="login" name="login" placeholder="Login">
+				<input type="password" id="password" name="password" placeholder="Password">
+				<p>Don't share your password with anyone</p>
+				<button type="submit">Sign Up</button>
+			</form>
+		</div>
+		<div class="leftside" id="left">
+			<img src="https://img1.akspic.ru/crops/5/2/3/7/7/177325/177325-dalmaciya-oblako-voda-gora-ekoregion-3840x2160.jpg"
+				alt="photo" width="700" height="700">
+			<h2>Welcome!</h2>
+			<h3>To keep connected with us please login with your personal info</h3>
+		</div>
+		  <section class="section" id="second">
+			<h1 class="section__title">Модальное окно</h1>
+			<button class="section__button section__button2">Открыть 2</button>
+		  </section>
+		  <div class="modal modal2">
+			<div class="modal__main">
+			  <h2 class="modal__title">Ошибка входа!</h2>
+			  
+			  <div class="modal__container">
+				<p>Неверный логин или пароль. Пожалуйста, попробуйте снова.</p>
+			  </div>
+		
+			  <button class="modal__close">&#10006;</button>
+			</div>
+		  </div>
+	</div>
+	<script>
+		const scrollController = {
+  scrollPosition: 0,
+  disabledScroll() {
+    scrollController.scrollPosition = window.scrollY;
+    document.body.style.cssText = `
+      overflow: hidden;
+      position: fixed;
+      top: -${scrollController.scrollPosition}px;
+      left: 0;
+      height: 100vh;
+      width: 100vw;
+      padding-right: ${window.innerWidth - document.body.offsetWidth}px
+    `;
+    document.documentElement.style.scrollBehavior = 'unset';
+  },
+  enabledScroll() {
+    document.body.style.cssText = '';
+    window.scroll({top: scrollController.scrollPosition})
+    document.documentElement.style.scrollBehavior = '';
+  },
+}
+
+
+const modalController = ({modal, btnOpen, btnClose, time = 300}) => {
+  const buttonElems = document.querySelectorAll(btnOpen);
+  const modalElem = document.querySelector(modal);
+
+  modalElem.style.cssText = `
+    display: flex;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity ${time}ms ease-in-out;
+  `;
+
+  const closeModal = event => {
+    const target = event.target;
+
+    if (
+      target === modalElem ||
+      (btnClose && target.closest(btnClose)) ||
+      event.code === 'Escape'
+      ) {
+      
+      modalElem.style.opacity = 0;
+
+      setTimeout(() => {
+        modalElem.style.visibility = 'hidden';
+        scrollController.enabledScroll();
+      }, time);
+
+      window.removeEventListener('keydown', closeModal);
+    }
+  }
+
+  const openModal = () => {
+    modalElem.style.visibility = 'visible';
+    modalElem.style.opacity = 1;
+    window.addEventListener('keydown', closeModal);
+    scrollController.disabledScroll();
+  };
+
+  buttonElems.forEach(btn => {
+    btn.addEventListener('click', openModal);
+  });
+
+  modalElem.addEventListener('click', closeModal);
+};
+modalController({
+  modal: '.modal2',
+  btnOpen: 'section__button2',
+  btnClose: '.modal__close'
+});
+	</script>
 </body>
+
 </html>

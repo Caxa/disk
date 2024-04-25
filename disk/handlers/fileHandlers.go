@@ -17,11 +17,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func Modal(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func UploadFile(w http.ResponseWriter, r *http.Request) {
+func UploadFile1(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20) // Устанавливаем максимальный размер файла 10MB
 
 	storageDir := "storage"
@@ -61,7 +57,7 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	saveFileToDB(fileName, newFileName, recipientName, userID)
+	saveFileToDB1(fileName, newFileName, recipientName, userID)
 
 	// Чтение содержимого HTML-шаблона
 	tmpl, err := template.ParseFiles("templates/modal.html")
@@ -82,7 +78,70 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl.Execute(w, data)
-	//http.Redirect(w, r, "/main?id="+strconv.Itoa(id), http.StatusFound)
+
+}
+func UploadFile(w http.ResponseWriter, r *http.Request) {
+	r.ParseMultipartForm(10 << 20) // Устанавливаем максимальный размер файла 10MB
+
+	storageDir := "storage"
+	if _, err := os.Stat(storageDir); os.IsNotExist(err) {
+		os.Mkdir(storageDir, 0755)
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Ошибка при получении файла", http.StatusInternalServerError)
+		log.Println("Ошибка при получении файла:", err)
+		return
+	}
+	defer file.Close()
+
+	fileName := handler.Filename
+	recipientName := r.FormValue("recipient")
+	senderName := r.FormValue("sender")
+
+	// Создаем уникальное имя файла на основе времени отправления
+	timeFormat := time.Now().Format("2006-01-02_15-04-05")
+	newFileName := fmt.Sprintf("%s_%s->%s_%s", timeFormat, senderName, recipientName, fileName)
+
+	userID, _ := getUserIDFromDB(recipientName)
+	senderID, _ := getUserIDFromDB(senderName)
+
+	dst, err := os.Create(filepath.Join(storageDir, newFileName))
+	if err != nil {
+		http.Error(w, "Ошибка при создании файла", http.StatusInternalServerError)
+		log.Println("Ошибка при создании файла:", err)
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		http.Error(w, "Ошибка при сохранении файла на сервере", http.StatusInternalServerError)
+		log.Println("Ошибка при сохранении файла на сервере:", err)
+		return
+	}
+
+	saveFileToDB(fileName, newFileName, recipientName, userID, senderName, senderID)
+
+	// Чтение содержимого HTML-шаблона
+	tmpl, err := template.ParseFiles("templates/modal.html")
+	if err != nil {
+		http.Error(w, "Ошибка при чтении файла шаблона", http.StatusInternalServerError)
+		log.Println("Ошибка при чтении файла шаблона:", err)
+		return
+	}
+
+	data := struct {
+		FileName      string
+		FileSize      int64
+		RecipientName string
+	}{
+		FileName:      fileName,
+		FileSize:      handler.Size,
+		RecipientName: recipientName,
+	}
+
+	tmpl.Execute(w, data)
 
 }
 
@@ -101,9 +160,16 @@ func getUserIDFromDB(username string) (string, error) {
 	return userID, nil
 }
 
-func saveFileToDB(originalFilename, storedFilename, recipientName string, userID string) {
+func saveFileToDB1(originalFilename, storedFilename, recipientName string, userID string) {
 	query := "INSERT INTO files (original_filename, stored_filename, recipient_id, recipient_name, upload_timestamp) VALUES ($1, $2, $3, $4, $5)"
 	_, err := Db.Exec(query, originalFilename, storedFilename, userID, recipientName, time.Now())
+	if err != nil {
+		log.Fatal("Failed to insert file into database:", err)
+	}
+}
+func saveFileToDB(originalFilename, storedFilename, recipientName string, userID string, senderName string, senderID string) {
+	query := "INSERT INTO filess (original_filename, stored_filename, recipient_id, recipient_name, sender_id,sender_name, upload_timestamp) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	_, err := Db.Exec(query, originalFilename, storedFilename, userID, recipientName, senderID, senderName, time.Now())
 	if err != nil {
 		log.Fatal("Failed to insert file into database:", err)
 	}
@@ -135,7 +201,7 @@ func DeleteFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteFileFromDB(fileName string) error {
-	query := "DELETE FROM files WHERE stored_filename = $1"
+	query := "DELETE FROM filess WHERE stored_filename = $1"
 	_, err := Db.Exec(query, fileName)
 	if err != nil {
 		log.Println("Ошибка при удалении файла из базы данных:", err)

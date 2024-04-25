@@ -3,15 +3,14 @@
 <head>
     <title>Модальное окно</title>
     <style>
-        /* CSS для стилизации модального окна */
         .modal {
             display: block;
             position: fixed;
-            z-index: 1;
+            z-index: 9999;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            background-color: #fefefe;
+            background-color: rgba(255, 255, 255, 0.8); /* Прозрачный белый фон */
             padding: 10px;
             border: 1px solid #888;
             width: 200px;
@@ -29,6 +28,7 @@
             text-decoration: none;
             cursor: pointer;
         }
+        
     </style>
 </head>
 <body>
@@ -39,6 +39,36 @@
     </div>
 
     <script>
+document.querySelector('form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const login = document.querySelector('input[name="login"]').value;
+            const password = document.querySelector('input[name="password"]').value;
+            
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ login, password })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                // Если есть ошибка, показываем модальное окно
+                var modal = document.querySelector('.modal');
+                modal.style.display = 'block';
+                modal.innerHTML = `
+                    <span class="close" onclick="closeModal()">×</span>
+                    <h2>Ошибка входа</h2>
+                    <p>${data.message}</p>
+                `;
+            } else {
+                window.location.href = '/upload1.html'; // Перенаправление на страницу upload.html при успешном входе
+            }
+        });
+
         function closeModal() {
             document.querySelector('.modal').style.display = 'none';
             window.history.back();
