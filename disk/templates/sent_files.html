@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -296,7 +297,7 @@ body, h2, label, input, a {
         </ul>
     </div>
     <div id="profile">{{.UserName}}</div>
-    <div id="logout">Exit</div>
+    <div id="logout">Back</div>
     <script>
 document.getElementById("changeThemeButton").addEventListener("click", function() {
     var button = document.getElementById("changeThemeButton");
@@ -350,16 +351,11 @@ ukFlag.addEventListener("click", function() {
     ruFlag.style.display = "block";
 
     // Изменить язык на русский
-    document.getElementById("logout").innerText = "Выход";
+    document.getElementById("logout").innerText = "Назад";
     document.getElementById("changeThemeButton").innerText = "Вид";
-    document.querySelector('label[for="recipient"]').innerText = "Получатель:";
     document.querySelector(".search-input").setAttribute("placeholder", "Поиск файлов...");
     document.getElementById("available").innerText = "Доступные файлы для загрузки:";
-    document.getElementById("select").innerText = "Выберите файл для загрузки:";
     document.getElementById("df").innerText = "Удалить файл";
-    document.getElementById("upload-button").value = translations["ru"]["upload"];
-    document.querySelector("file").setAttribute("placeholder", "Выберите файл");
-
 });
 
 ruFlag.addEventListener("click", function() {
@@ -370,13 +366,9 @@ ruFlag.addEventListener("click", function() {
     // Изменить язык на английский
     document.getElementById("logout").innerText = "Exit";
     document.getElementById("changeThemeButton").innerText = "View";
-    document.querySelector('label[for="recipient"]').innerText = "Recipient:";
     document.querySelector(".search-input").setAttribute("placeholder", "Search files...");
     document.getElementById("available").innerText = "Files available for download:";
-    document.getElementById("select").innerText = "Select file to upload:";
     document.getElementById("df").innerText = "Delete file";
-    document.getElementById("upload-button").value = translations["en"]["upload"];
-    document.querySelector("file").setAttribute("placeholder", "Select file");
 
 });
 function searchFiles() {
@@ -395,6 +387,7 @@ function searchFiles() {
             }
         }
     }
+
 
     function deleteAllFiles() {
         var ul = document.getElementById("file-list");

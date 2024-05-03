@@ -20,16 +20,23 @@
             /* Устанавливаем белый цвет текста */
         }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         .upload-header {
             display: flex;
+            flex-direction: column;
             align-items: center;
             padding-top: 85px;
         }
 
         h2 {
-            font-family: Bookman, URW Bookman L, serif;
             text-align: center;
             margin-top: 5px;
+            font-size: 25px;
         }
 
         #logout {
@@ -68,13 +75,6 @@
             font-size: 20px;
         }
 
-        label[for="file"] {
-            margin-bottom: 19px;
-            margin-right: 1px;
-            /* Добавляем отступ справа */
-            margin-left: 10px;
-        }
-
         input {
             margin-right: 10px;
             /* Отступ между элементами */
@@ -90,27 +90,44 @@
             cursor: pointer;
         }
 
-        .upload-button {
-            padding: 5px 10px;
+        #viewSentFilesButton {
+            padding-top: 4px;
+            padding-left: 8px;
+            padding-right: 8px;
+            padding-bottom: 4px;
             background-image: linear-gradient(90deg, blue, purple);
             color: white;
             /* Белый цвет текста */
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            margin-left: 5px;
+            height: 31px;
+        }
+
+        .upload-button {
+            padding: 5px 10px;
+            background-color: #99201c;
+            background-image: linear-gradient(316deg, #99201c 0%, #f56545 74%);
+            color: white;
+            /* Белый цвет текста */
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
             height: 31px;
         }
 
         .upload-container {
             display: flex;
+            justify-content: center;
             align-items: center;
+            flex-wrap: wrap;
+            /* Позволяет элементам переноситься на следующую строку */
         }
 
         .file-container {
             position: relative;
             padding-top: 20px;
-            flex: 0.92;
+            flex: 20;
             /* Растягиваем контейнер до конца страницы */
             width: 55%;
             margin: 20px auto;
@@ -151,23 +168,8 @@
             border: 3px solid #a6f2ff;
             /* Голубая обводка при фокусе */
             padding-left: 5px;
-            width: 150px;
-            margin-top: 10px;
-            margin-left: 20px;
-        }
+            width: 60%;
 
-        .delete-all-button {
-            margin-left: 423px;
-            width: 160px;
-            height: 32px;
-            border-radius: 10px;
-            outline: none;
-            border: 3px solid #a6f2ff;
-        }
-
-        .delete-all-button:active {
-            transform: scale(0.98);
-            /* Уменьшаем размер кнопки на 5% при нажатии */
         }
 
         a {
@@ -192,8 +194,9 @@
             width: 140px;
         }
 
+
         button#changeThemeButton {
-            font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+            font-family: Dejavu Sans, Arial, Verdana, sans-serif;
             width: 40px;
             height: 20px;
             position: absolute;
@@ -234,9 +237,82 @@
             right: 10px;
         }
 
+        .delete-button {
+            border-radius: 10px;
+            height: 32px;
+            outline: none;
+            border: 3px solid #a6f2ff;
+            /* Голубая обводка при фокусе */
+            width: 130px;
+        }
+
+        .search-delete-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         .file-checkbox {
             width: 13px;
             height: 13px;
+        }
+
+        select {
+            border-radius: 10px;
+            height: 32px;
+            outline: none;
+            border: 3px solid #a6f2ff;
+
+        }
+
+        body,
+        h2,
+        label,
+        input,
+        a {
+            Font-family: Candara, Calibri, Segoe, Segoe UI, Optima, Arial, sans-serif;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-window {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            border: none;
+            background-color: no-clip;
+            opacity: 0.7;
+        }
+
+        .btn-close:hover {
+            opacity: 2;
         }
     </style>
 </head>
@@ -247,40 +323,51 @@
         alt="Флаг Великобритании">
     <div class="upload-header">
         <button id="changeThemeButton">View</button>
-        <label for="file">Select file to upload:</label>
         <div class="upload-container">
-            <form id="form-upload" Xaction="/upload" Xmethod="post" Xenctype="multipart/form-data">
-                <input type="file" id="file" name="file">
-                <input type="submit" value="Upload" class="upload-button">
+            <form action="/upload" method="post" enctype="multipart/form-data" style="display: flex; gap: 0.5em; align-items: center;">
+                <label for="file" id="select">Select file to upload:</label>
+                <input type="file" id="file" name="file" placeholder="Select file">
                 <label for="recipient">Recipient:</label>
-                <input type="text" id="recipient" name="recipient"><br><br>
+                <input type="text" id="sender" value="{{.UserName}}" name="sender"
+                    style="display: none; pointer-events: none" />
+                <input type="text" id="recipient" name="recipient">
+                <input type="submit" value="Upload" class="upload-button" id="upload-button">
             </form>
-            <form action="/delete" method="post">
-                <select name="fileToDelete" id="fileToDelete">
+        </div>
+    </div>
+
+    <div class="file-container">
+        <h2 id="available">Files available for download: <i class="fa fa-search"></i></h2>
+        <div class="search-delete-container"
+            style=" display: grid; grid-template-areas: 'delete delete' 'search sent'; grid-auto-columns: 1fr auto; max-width: 100%; margin: 1em 2em; gap: 0.5em 1em;">
+            <input type="text" placeholder="Search files..." class="search-input" oninput="searchFiles()"
+                style=" box-sizing: border-box; grid-area: search;">
+            <form action="/delete" method="post" class="delete-form"
+                style="grid-area: delete; display: flex; min-width: 0px; justify-content: space-between; max-width: 100%;">
+                <select name="fileToDelete" id="fileToDelete" style="max-width: 60%;">
                     {{range .Files}}
                     <option value="{{.}}">{{.}}</option>
                     {{end}}
                 </select>
-                <button type="submit" class="delete-button">Delete File</button>
+                <button type="submit" class="delete-button" id="df" onclick="deleteAllFiles"
+                    style="display: block;">Delete File</button>
+            </form>
+            <form action="/sent_files?id={{.Id}}" method="post" style="grid-area: sent;">
+                <button id="viewSentFilesButton" class="view-files-button">View sent files</button>
             </form>
         </div>
-    </div>
-    <div class="file-container">
-        <h2>Files available for download: <i class="fa fa-search"></i></h2>
-        <input type="text" placeholder="Search files..." class="search-input" oninput="searchFiles()">
-        <button class="delete-all-button" onclick="deleteAllFiles()">Delete All Files</button>
-        <ul id="file-list">
+        <ul id="file-list" style="margin: 0 2em;">
             {{range .Files}}
-            <li><a href="/download/{{.}}">{{.}}</a></li>
+            <li>
+                <a href="/download/{{.}}">{{.}}</a>
+            </li>
             {{end}}
         </ul>
     </div>
     <div id="profile">{{.UserName}}</div>
     <div id="logout">Exit</div>
     <script>
-        document.getElementById("logout").addEventListener("click", function () {
-            window.location.href = "/";
-        });
+
         document.getElementById("changeThemeButton").addEventListener("click", function () {
             var button = document.getElementById("changeThemeButton");
             var currentBackground = document.body.style.backgroundImage;
@@ -298,31 +385,6 @@
             button.innerText = "View"; // установить текст кнопки
         });
 
-        const formUploadElement = document.querySelector('#form-upload')
-        formUploadElement.addEventListener('submit', (e) => {
-            const username = document.querySelector('#profile').innerText
-
-            console.log('HUI', { e })
-
-
-
-            const formData = new FormData(formUploadElement)
-            formData.append('sender', username)
-
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => {
-                    console.log({response})
-                })
-                .catch(error => {
-                    // Ошибки
-                });
-
-            e.preventDefault()
-        })
-
         // Получаем элемент кнопки
         var button = document.getElementById("changeThemeButton");
 
@@ -334,6 +396,21 @@
         button.innerText = "View";
         button.style.lineHeight = button.clientHeight + "px";
 
+        var translations = {
+            "en": {
+                "delete-button": "Delete File",
+                "filesAvailable": "Files available for download:",
+                "selectFile": "Select file to upload",
+                "upload": "Upload"
+            },
+            "ru": {
+                "delete": "Удалить файл",
+                "filesAvailable": "Доступные файлы для загрузки:",
+                "selectFile": "Выберите файл для загрузки",
+                "upload": "Загрузить"
+            }
+        };
+
         var ukFlag = document.getElementById("uk-flag");
         var ruFlag = document.getElementById("ru-flag");
 
@@ -343,14 +420,15 @@
             ruFlag.style.display = "block";
 
             // Изменить язык на русский
-
-            document.getElementById("logout").innerText = "Выход";
+            document.getElementById("logout").innerText = "Назад";
             document.getElementById("changeThemeButton").innerText = "Вид";
             document.querySelector('label[for="recipient"]').innerText = "Получатель:";
             document.querySelector(".search-input").setAttribute("placeholder", "Поиск файлов...");
-            document.querySelector(".delete-all-button").innerText = "Удалить все файлы";
-            document.getElementById('file-label').innerText = "Выберите файл для загрузки:";
-            document.getElementById('upload-button').value = "Загрузить";
+            document.getElementById("available").innerText = "Доступные файлы для загрузки:";
+            document.getElementById("select").innerText = "Выберите файл для загрузки:";
+            document.getElementById("df").innerText = "Удалить файл";
+            document.getElementById("upload-button").value = translations["ru"]["upload"];
+            document.getElementById("viewSentFilesButton").innerText = "Посмотреть отправленные файлы";
         });
 
         ruFlag.addEventListener("click", function () {
@@ -359,25 +437,27 @@
             ukFlag.style.display = "block";
 
             // Изменить язык на английский
-
             document.getElementById("logout").innerText = "Exit";
             document.getElementById("changeThemeButton").innerText = "View";
             document.querySelector('label[for="recipient"]').innerText = "Recipient:";
             document.querySelector(".search-input").setAttribute("placeholder", "Search files...");
-            document.querySelector(".delete-all-button").innerText = "Delete All File";
-            document.getElementById('file-label').innerText = "Select file to upload:";
-            document.getElementById('upload-button').value = "Upload";
+            document.getElementById("available").innerText = "Files available for download:";
+            document.getElementById("select").innerText = "Select file to upload:";
+            document.getElementById("df").innerText = "Delete file";
+            document.getElementById("upload-button").value = translations["en"]["upload"];
+            document.getElementById("viewSentFilesButton").innerText = "View sent files";
+
         });
         function searchFiles() {
             var input, filter, ul, li, a, i, txtValue;
             input = document.querySelector('.search-input');
-            filter = input.value.toLocaleUpperCase();
+            filter = input.value.toUpperCase();
             ul = document.getElementById("file-list");
             li = ul.getElementsByTagName('li');
             for (i = 0; i < li.length; i++) {
                 a = li[i].getElementsByTagName("a")[0];
                 txtValue = a.textContent || a.innerText;
-                if (txtValue.toLocaleUpperCase().indexOf(filter) > -1) {
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
                     li[i].style.display = "";
                 } else {
                     li[i].style.display = "none";
@@ -385,14 +465,19 @@
             }
         }
 
-
-
         function deleteAllFiles() {
             var ul = document.getElementById("file-list");
             ul.innerHTML = ""; // Удаление всех элементов списка файлов
         }
 
+        document.getElementById("logout").addEventListener("click", function () {
+            window.location.href = "/";
+        });
+
+
+
     </script>
+
 </body>
 
 </html>

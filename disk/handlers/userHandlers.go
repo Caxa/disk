@@ -66,7 +66,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		Id:       userID,
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/upload1.html"))
+	tmpl := template.Must(template.ParseFiles("templates/upload.html"))
 
 	err = tmpl.Execute(w, data)
 	if err != nil {
